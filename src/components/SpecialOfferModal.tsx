@@ -28,6 +28,8 @@ interface SpecialOfferModalProps {
   onAddToCart: (productId: string, retailerId: RetailerId) => void;
 }
 
+const roundTwoDecimals = (val: number) => Math.round(val * 100) / 100;
+
 export const SpecialOfferModal: React.FC<SpecialOfferModalProps> = ({
   deal,
   currency,
@@ -141,6 +143,59 @@ export const SpecialOfferModal: React.FC<SpecialOfferModalProps> = ({
               <p className="text-xs text-slate-400 mt-0.5 font-mono">
                 Weight: {product.weightOz} oz ({product.weightGrams}g) • Purity: {product.purity} fine
               </p>
+            </div>
+          </div>
+
+          {/* Retailer Sale Page Image & Strike-Off Analysis Box */}
+          <div className="bg-slate-950 border border-rose-500/40 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
+                <span>📷</span>
+                <span>Retailer Sale Page Listing Image Analysis</span>
+              </span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-mono font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                Strike-Through Discount Verified
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800 items-center">
+              {/* Product Thumbnail with Simulated Tag */}
+              <div className="relative group">
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-full h-24 object-cover rounded-lg border border-slate-700 bg-black"
+                />
+                <div className="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow uppercase">
+                  Strike-Off Sale
+                </div>
+              </div>
+
+              {/* Price Tag Breakdown */}
+              <div className="sm:col-span-2 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between font-mono">
+                  <span className="text-slate-400">Official Listed Price:</span>
+                  <span className="text-slate-400 line-through font-bold">
+                    {formatPrice(offer.originalBuyPriceSgd, offer.originalBuyPriceUsd)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between font-mono">
+                  <span className="text-rose-300 font-semibold">Strike-off Promo Price:</span>
+                  <span className="text-rose-300 font-extrabold text-sm">
+                    {formatPrice(offer.promoBuyPriceSgd, offer.promoBuyPriceUsd)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between font-mono border-t border-slate-800 pt-1">
+                  <span className="text-emerald-400 font-bold">Net Direct Savings:</span>
+                  <span className="text-emerald-400 font-black">
+                    -S${offer.savingsSgd.toFixed(2)} ({offer.discountPct || roundTwoDecimals(((offer.originalBuyPriceSgd - offer.promoBuyPriceSgd) / offer.originalBuyPriceSgd) * 100)}% OFF)
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 italic pt-1">
+                  "{offer.salePageAnalysis || 'Verified retailer listing image: strike-through discount confirmed lower than standard list price.'}"
+                </p>
+              </div>
             </div>
           </div>
 

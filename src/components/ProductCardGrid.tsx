@@ -14,7 +14,10 @@ interface ProductCardGridProps {
   onComparePremiums?: (product: ComputedProductMetrics) => void;
   activeAlertProductIds?: Set<string>;
   isMarketClosed?: boolean;
+  priceDisplayMode?: 'BUY' | 'SELL_BACK' | 'BOTH';
 }
+
+const roundTwoDecimals = (val: number) => Math.round(val * 100) / 100;
 
 export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
   computedProducts,
@@ -26,6 +29,7 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
   onComparePremiums,
   activeAlertProductIds,
   isMarketClosed = false,
+  priceDisplayMode = 'BUY',
 }) => {
   const retailerKeys: RetailerId[] = ['silverbullion', 'bullionstar', 'lpm'];
 
@@ -170,14 +174,18 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                     );
                   }
 
+                  const isBestSell = metrics.isHighestSellPrice;
+
                   return (
                     <div
                       key={rid}
                       onClick={(e) => openRetailerListing(rid, product, e)}
                       className={`p-3 rounded-xl border transition-all cursor-pointer group/cardrow ${
-                        offer
+                        priceDisplayMode === 'SELL_BACK' && isBestSell
+                          ? 'bg-emerald-950/30 border-emerald-500/50 hover:border-emerald-400 shadow-sm'
+                          : offer
                           ? 'bg-rose-950/20 border-rose-500/40 hover:border-rose-400/80 shadow-sm hover:shadow-rose-900/20'
-                          : isBest
+                          : isBest && priceDisplayMode === 'BUY'
                           ? 'bg-amber-500/10 border-amber-500/40 hover:border-amber-400'
                           : 'bg-slate-800/50 border-slate-800 hover:border-slate-700'
                       }`}
@@ -189,7 +197,14 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                             <span>{ret.shortName}</span>
                             <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover/cardrow:opacity-100" />
                           </span>
-                          {offer ? (
+                          {priceDisplayMode === 'SELL_BACK' ? (
+                            isBestSell ? (
+                              <span className="flex items-center space-x-1 text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/40">
+                                <Trophy className="w-2.5 h-2.5 text-emerald-400 fill-emerald-400" />
+                                <span>Best Buyback Payout</span>
+                              </span>
+                            ) : null
+                          ) : offer ? (
                             <span className="flex items-center space-x-1 text-[10px] text-rose-300 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30">
                               <Flame className="w-2.5 h-2.5 text-rose-400 fill-rose-400" />
                               <span>{offer.badgeText}</span>
@@ -202,59 +217,68 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                           ) : null}
                         </div>
 
-                        {/* Price display: Retail Shop Walk-In Price ON TOP OF Online Ask Price */}
+                        {/* Price display depending on mode */}
                         <div className="text-right flex flex-col items-end">
-                          {/* Retail Shop Walk-In Tag Price */}
-                          <div className="flex items-center space-x-1 text-[11px] text-amber-300 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 mb-0.5">
-                            <Store className="w-2.5 h-2.5 text-amber-400" />
-                            <span className="text-[9px] text-slate-400 uppercase tracking-tight">Retail Shop:</span>
-                            <span className="font-mono">
-                              {formatMoney(metrics.retailShopPriceSgd, metrics.retailShopPriceUsd)}
-                            </span>
-                          </div>
+                          {priceDisplayMode === 'SELL_BACK' ? (
+                            <div className="flex flex-col items-end">
+                              <div className="text-[9px] text-slate-400 uppercase tracking-tight font-bold">Buyback Payout:</div>
+                              <div className="text-sm font-mono font-black text-emerald-300">
+                                {formatMoney(metrics.sellPriceSgd, metrics.sellPriceUsd)}
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Retail Shop Walk-In Tag Price */}
+                              <div className="flex items-center space-x-1 text-[11px] text-amber-300 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 mb-0.5">
+                                <Store className="w-2.5 h-2.5 text-amber-400" />
+                                <span className="text-[9px] text-slate-400 uppercase tracking-tight">Retail Shop:</span>
+                                <span className="font-mono">
+                                  {formatMoney(metrics.retailShopPriceSgd, metrics.retailShopPriceUsd)}
+                                </span>
+                              </div>
 
-                          {/* Online Dealer Ask Price */}
-                          <div className="flex items-center space-x-1">
-                            <span className="text-[9px] text-slate-400 uppercase tracking-tight">Online Ask:</span>
-                            {offer && (
-                              <span className="text-[10px] text-slate-400 line-through font-mono mr-0.5">
-                                {formatMoney(offer.originalBuyPriceSgd, offer.originalBuyPriceUsd)}
-                              </span>
-                            )}
-                            <span className={`text-xs font-mono font-extrabold ${offer ? 'text-rose-300' : 'text-white'}`}>
-                              {formatMoney(metrics.buyPriceSgd, metrics.buyPriceUsd)}
-                            </span>
-                          </div>
+                              {/* Online Dealer Ask Price */}
+                              <div className="flex items-center space-x-1">
+                                <span className="text-[9px] text-slate-400 uppercase tracking-tight">Online Ask:</span>
+                                {offer && (
+                                  <span className="text-[10px] text-slate-400 line-through font-mono mr-0.5">
+                                    {formatMoney(offer.originalBuyPriceSgd, offer.originalBuyPriceUsd)}
+                                  </span>
+                                )}
+                                <span className={`text-xs font-mono font-extrabold ${offer ? 'text-rose-300' : 'text-white'}`}>
+                                  {formatMoney(metrics.buyPriceSgd, metrics.buyPriceUsd)}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
 
                       {/* Promo Offer Header Details */}
-                      {offer && (
-                        <div className="mb-2 p-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[11px]">
+                      {priceDisplayMode !== 'SELL_BACK' && offer && (
+                        <div className="mb-2 p-1.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-[11px] space-y-1">
                           <div className="font-semibold text-rose-200 flex items-center justify-between">
-                            <span>{offer.title}</span>
+                            <span className="truncate pr-1">{offer.title}</span>
                             {offer.expiresIn && (
-                              <span className="text-[10px] text-amber-300 flex items-center gap-0.5">
+                              <span className="text-[10px] text-amber-300 flex items-center gap-0.5 flex-shrink-0">
                                 <Clock className="w-2.5 h-2.5" />
                                 {offer.expiresIn}
                               </span>
                             )}
                           </div>
-                          <div className="text-slate-300 text-[10px] mt-0.5 flex items-center justify-between">
-                            <span>
-                              Saved: <strong className="text-emerald-300 font-mono">S${offer.savingsSgd.toFixed(2)}</strong>
+                          <div className="text-slate-300 text-[10px] flex items-center justify-between font-mono">
+                            <span className="text-emerald-300 font-bold">
+                              Save S${offer.savingsSgd.toFixed(2)} ({offer.discountPct || roundTwoDecimals(((offer.originalBuyPriceSgd - offer.promoBuyPriceSgd) / offer.originalBuyPriceSgd) * 100)}% OFF)
                             </span>
-                            {offer.code && (
-                              <span className="font-mono bg-slate-900/80 px-1 rounded text-amber-300 border border-amber-500/30">
-                                Code: {offer.code}
-                              </span>
-                            )}
+                            <span className="text-rose-300 font-semibold flex items-center gap-0.5">
+                              <span>📷</span> Strike-off
+                            </span>
                           </div>
                         </div>
                       )}
 
                       {/* Bulk Tier Pricing Banner */}
-                      {product.prices[rid].bulkTiers && product.prices[rid].bulkTiers!.length > 0 && (
+                      {priceDisplayMode !== 'SELL_BACK' && product.prices[rid].bulkTiers && product.prices[rid].bulkTiers!.length > 0 && (
                         <div className="mt-1.5 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] bg-amber-950/20 px-2 py-1 rounded-lg border border-amber-500/20">
                           <div className="flex items-center space-x-1 font-bold text-amber-300">
                             <Layers className="w-3 h-3 text-amber-400" />
@@ -270,23 +294,39 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                       )}
 
                       <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
-                        <span>
-                          Prem:{' '}
-                          {offer ? (
-                            <span className="font-mono">
-                              <span className="line-through text-slate-500 mr-1">+{offer.originalPremiumPct}%</span>
-                              <strong className="text-rose-300">+{metrics.premiumPct}%</strong>
+                        {priceDisplayMode === 'SELL_BACK' ? (
+                          <>
+                            <span>
+                              Sell Prem:{' '}
+                              <strong className={`font-mono ${metrics.sellPremiumPct >= 0 ? 'text-emerald-300' : 'text-amber-300'}`}>
+                                {metrics.sellPremiumPct >= 0 ? `+${metrics.sellPremiumPct}%` : `${metrics.sellPremiumPct}%`}
+                              </strong>
                             </span>
-                          ) : (
-                            <strong className="text-emerald-400 font-mono">+{metrics.premiumPct}%</strong>
-                          )}
-                        </span>
-                        <span>
-                          Spread: <strong className="text-slate-300 font-mono">{metrics.spreadPct}%</strong>
-                        </span>
-                        <span>
-                          Sell: <strong className="text-slate-300 font-mono">{currency === 'USD' ? `$${metrics.sellPriceUsd}` : `S$${metrics.sellPriceSgd}`}</strong>
-                        </span>
+                            <span>
+                              Online Ask: <strong className="text-slate-300 font-mono">{currency === 'USD' ? `$${metrics.buyPriceUsd}` : `S$${metrics.buyPriceSgd}`}</strong>
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span>
+                              Prem:{' '}
+                              {offer ? (
+                                <span className="font-mono">
+                                  <span className="line-through text-slate-500 mr-1">+{offer.originalPremiumPct}%</span>
+                                  <strong className="text-rose-300">+{metrics.premiumPct}%</strong>
+                                </span>
+                              ) : (
+                                <strong className="text-emerald-400 font-mono">+{metrics.premiumPct}%</strong>
+                              )}
+                            </span>
+                            <span>
+                              Spread: <strong className="text-slate-300 font-mono">{metrics.spreadPct}%</strong>
+                            </span>
+                            <span>
+                              Sell: <strong className="text-slate-300 font-mono">{currency === 'USD' ? `$${metrics.sellPriceUsd}` : `S$${metrics.sellPriceSgd}`}</strong>
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
 import { PremiumSparkline } from './PremiumSparkline';
-import { Trophy, ShoppingBag, ArrowUpRight, PlusCircle, Flame, Clock, ExternalLink, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ShoppingCart, TrendingUp, TrendingDown, Zap, Activity, PauseCircle, Radio, ArrowUpDown } from 'lucide-react';
+import { Trophy, ShoppingBag, ArrowUpRight, PlusCircle, Flame, Clock, ExternalLink, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ShoppingCart, TrendingUp, TrendingDown, Zap, Activity, PauseCircle, Radio, ArrowUpDown, DollarSign } from 'lucide-react';
 import { getRetailerListingUrl, openRetailerListing } from '../utils/urlUtils';
 
 interface ProductComparisonTableProps {
@@ -17,6 +17,8 @@ interface ProductComparisonTableProps {
   onSortByWeight?: (direction: 'desc' | 'asc') => void;
   activeAlertProductIds?: Set<string>;
   isMarketClosed?: boolean;
+  priceDisplayMode?: 'BUY' | 'SELL_BACK' | 'BOTH';
+  setPriceDisplayMode?: (mode: 'BUY' | 'SELL_BACK' | 'BOTH') => void;
 }
 
 export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
@@ -31,6 +33,8 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
   onSortByWeight,
   activeAlertProductIds,
   isMarketClosed = false,
+  priceDisplayMode = 'BUY',
+  setPriceDisplayMode,
 }) => {
   const retailerKeys: RetailerId[] = ['silverbullion', 'bullionstar', 'lpm'];
 
@@ -477,7 +481,8 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                   {retailerKeys.map((rid) => {
                     const metrics = retailerMetrics[rid];
                     const offer = product.prices[rid]?.specialOffer;
-                    const isBest = rid === bestBuyRetailerId;
+                    const isBestBuy = rid === bestBuyRetailerId;
+                    const isBestSell = metrics?.isHighestSellPrice;
 
                     if (!metrics?.inStock || metrics.buyPriceSgd <= 0) {
                       return (
@@ -500,63 +505,135 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                       <td
                         key={rid}
                         className={`py-4 px-4 align-top border-l border-slate-800/80 ${
-                          offer
+                          priceDisplayMode === 'SELL_BACK' && isBestSell
+                            ? 'bg-emerald-950/25 border-emerald-500/30'
+                            : offer
                             ? 'bg-rose-950/20'
-                            : isBest
+                            : isBestBuy && priceDisplayMode === 'BUY'
                             ? 'bg-amber-500/5 dark:bg-amber-500/10'
                             : ''
                         }`}
                       >
                         <div className="space-y-2">
-                          {/* Special Offer or Lowest Price Trophy Badge */}
-                          {offer ? (
-                            <div className="inline-flex items-center space-x-1 px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded text-[11px] font-bold">
-                              <Flame className="w-3 h-3 text-rose-400 fill-rose-400 animate-pulse" />
-                              <span>{offer.badgeText}</span>
+                          {/* Top Badge depending on priceDisplayMode */}
+                          {priceDisplayMode === 'SELL_BACK' ? (
+                            isBestSell ? (
+                              <div className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-lg text-[11px] font-extrabold shadow-sm">
+                                <Trophy className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
+                                <span>HIGHEST BUYBACK OFFER</span>
+                              </div>
+                            ) : null
+                          ) : offer ? (
+                            <div className="flex flex-col gap-1">
+                              <div className="inline-flex items-center justify-between px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded text-[11px] font-bold">
+                                <span className="flex items-center space-x-1">
+                                  <Flame className="w-3 h-3 text-rose-400 fill-rose-400 animate-pulse" />
+                                  <span>{offer.badgeText}</span>
+                                </span>
+                                {offer.discountPct && (
+                                  <span className="text-[10px] bg-rose-500/40 text-white px-1.5 py-0.2 rounded font-extrabold ml-1">
+                                    {offer.discountPct}% OFF
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="bg-slate-950/80 border border-rose-500/30 rounded px-2 py-1 text-[10px] text-rose-200 flex items-center gap-1.5 font-mono">
+                                <span>📷</span>
+                                <span className="font-semibold truncate" title={offer.salePageAnalysis || 'Retailer sale page image shows official listed price struck off with promo discount.'}>
+                                  Sale Page: Strike-through verified
+                                </span>
+                              </div>
                             </div>
-                          ) : isBest ? (
+                          ) : isBestBuy ? (
                             <div className="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/40 rounded text-[11px] font-bold">
                               <Trophy className="w-3 h-3 text-amber-400 fill-amber-400" />
                               <span>Lowest Buy Price</span>
                             </div>
                           ) : null}
 
-                          {/* Retail Shop Price (ON TOP OF Online Ask Price) */}
-                          <div
-                            onClick={(e) => openRetailerListing(rid, product, e)}
-                            className="bg-slate-800/60 hover:bg-slate-800 p-2 rounded-lg border border-slate-700/60 hover:border-amber-500/50 space-y-1 cursor-pointer transition-all group/price"
-                            title={`Click to open ${RETAILERS[rid].name} store listing page`}
-                          >
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="text-slate-400 font-medium flex items-center gap-1 group-hover/price:text-amber-300 transition-colors">
-                                <Store className="w-3 h-3 text-amber-400" />
-                                Retail Shop:
-                              </span>
-                              <span className="font-mono font-bold text-amber-300">
-                                {formatMoney(metrics.retailShopPriceSgd, metrics.retailShopPriceUsd)}
-                              </span>
-                            </div>
+                          {/* MAIN DISPLAY BOX based on priceDisplayMode */}
+                          {priceDisplayMode === 'SELL_BACK' ? (
+                            /* SELL-BACK PAIRED BOX */
+                            <div
+                              onClick={(e) => openRetailerListing(rid, product, e)}
+                              className={`p-2.5 rounded-xl border space-y-1.5 cursor-pointer transition-all group/sell ${
+                                isBestSell
+                                  ? 'bg-emerald-950/40 border-emerald-500/50 hover:border-emerald-400 shadow-md shadow-emerald-950/30'
+                                  : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 hover:border-emerald-500/40'
+                              }`}
+                              title={`Click to view ${RETAILERS[rid].name} buyback terms and sell back bullion`}
+                            >
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-slate-400 font-bold flex items-center gap-1 group-hover/sell:text-emerald-300 transition-colors">
+                                  <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>Retailer Buyback Payout:</span>
+                                </span>
+                                <ExternalLink className="w-3 h-3 text-emerald-400 opacity-0 group-hover/sell:opacity-100 transition-opacity" />
+                              </div>
 
-                            <div className="flex items-center justify-between border-t border-slate-700/40 pt-1">
-                              <span className="text-[11px] text-slate-400 font-medium group-hover/price:text-slate-200 flex items-center gap-1 transition-colors">
-                                <span>Online Ask:</span>
-                                <ExternalLink className="w-2.5 h-2.5 text-amber-400 opacity-0 group-hover/price:opacity-100 transition-opacity" />
-                              </span>
-                              <div className="text-right">
-                                {offer && (
-                                  <span className="text-[10px] text-slate-400 line-through font-mono mr-1">
-                                    {formatMoney(offer.originalBuyPriceSgd, offer.originalBuyPriceUsd)}
-                                  </span>
-                                )}
-                                <span className={`text-sm font-bold font-mono ${offer ? 'text-rose-300' : 'text-white group-hover/price:text-amber-300'} transition-colors`}>
-                                  {formatMoney(metrics.buyPriceSgd, metrics.buyPriceUsd)}
+                              <div className="text-base font-black font-mono text-emerald-300 group-hover/sell:text-emerald-200">
+                                {formatMoney(metrics.sellPriceSgd, metrics.sellPriceUsd)}
+                              </div>
+
+                              <div className="flex items-center justify-between border-t border-slate-700/50 pt-1 text-xs">
+                                <span className="text-slate-400 text-[11px]">Sell-Back Premium:</span>
+                                <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[11px] ${
+                                  metrics.sellPremiumPct >= 0
+                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                }`}>
+                                  {metrics.sellPremiumPct >= 0 ? `+${metrics.sellPremiumPct}%` : `${metrics.sellPremiumPct}%`}
                                 </span>
                               </div>
-                            </div>
-                          </div>
 
-                          {/* Offer Savings details */}
-                          {offer && (
+                              <div className="flex justify-between items-center text-[10px] text-slate-400 pt-0.5">
+                                <span>Online Buy Ask:</span>
+                                <span className="font-mono text-slate-300">{formatMoney(metrics.buyPriceSgd, metrics.buyPriceUsd)}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            /* BUY OR BOTH MODE DISPLAY BOX */
+                            <div
+                              onClick={(e) => openRetailerListing(rid, product, e)}
+                              className="bg-slate-800/60 hover:bg-slate-800 p-2 rounded-lg border border-slate-700/60 hover:border-amber-500/50 space-y-1 cursor-pointer transition-all group/price"
+                              title={`Click to open ${RETAILERS[rid].name} store listing page`}
+                            >
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-slate-400 font-medium flex items-center gap-1 group-hover/price:text-amber-300 transition-colors">
+                                  <Store className="w-3 h-3 text-amber-400" />
+                                  Retail Shop:
+                                </span>
+                                <span className="font-mono font-bold text-amber-300">
+                                  {formatMoney(metrics.retailShopPriceSgd, metrics.retailShopPriceUsd)}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center justify-between border-t border-slate-700/40 pt-1">
+                                <span className="text-[11px] text-slate-400 font-medium group-hover/price:text-slate-200 flex items-center gap-1 transition-colors">
+                                  <span>Online Ask:</span>
+                                  <ExternalLink className="w-2.5 h-2.5 text-amber-400 opacity-0 group-hover/price:opacity-100 transition-opacity" />
+                                </span>
+                                <div className="text-right">
+                                  {offer && (
+                                    <div className="text-[10px] text-rose-300 font-mono flex items-center justify-end gap-1">
+                                      <span className="line-through text-slate-400">
+                                        {formatMoney(offer.originalBuyPriceSgd, offer.originalBuyPriceUsd)}
+                                      </span>
+                                      <span className="text-[9px] bg-rose-500/30 px-1 rounded font-bold text-rose-200">
+                                        Sale
+                                      </span>
+                                    </div>
+                                  )}
+                                  <span className={`text-sm font-bold font-mono ${offer ? 'text-rose-300' : 'text-white group-hover/price:text-amber-300'} transition-colors`}>
+                                    {formatMoney(metrics.buyPriceSgd, metrics.buyPriceUsd)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Offer Savings details & Strike-off Page Analysis */}
+                          {priceDisplayMode !== 'SELL_BACK' && offer && (
                             <div
                               onClick={(e) => {
                                 if (onSelectSpecialOffer) {
@@ -564,21 +641,27 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                                   onSelectSpecialOffer(product, rid, offer);
                                 }
                               }}
-                              className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 p-1.5 rounded-lg text-[10px] space-y-0.5 cursor-pointer transition-colors"
+                              className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 p-2 rounded-lg text-[10px] space-y-1 cursor-pointer transition-colors shadow-sm"
                             >
                               <div className="text-rose-200 font-semibold flex items-center justify-between">
-                                <span>{offer.title}</span>
-                                <ExternalLink className="w-2.5 h-2.5 text-rose-300" />
+                                <span className="truncate pr-1">{offer.title}</span>
+                                <ExternalLink className="w-2.5 h-2.5 text-rose-300 flex-shrink-0" />
                               </div>
-                              <div className="text-slate-300 flex items-center justify-between">
-                                <span>Savings: <strong className="text-emerald-300 font-mono">S${offer.savingsSgd.toFixed(2)}</strong></span>
-                                {offer.code && <span className="font-mono text-amber-300">Code: {offer.code}</span>}
+                              <div className="text-slate-300 flex items-center justify-between font-mono">
+                                <span className="text-emerald-300 font-bold">
+                                  Save: S${offer.savingsSgd.toFixed(2)}
+                                </span>
+                                {offer.code && <span className="text-amber-300 text-[9px] bg-slate-900 px-1 rounded border border-amber-500/30">Code: {offer.code}</span>}
+                              </div>
+                              <div className="text-[9px] text-slate-400 border-t border-rose-500/20 pt-1 flex items-center justify-between">
+                                <span>Official List: <span className="line-through text-slate-500">S${offer.originalBuyPriceSgd.toFixed(2)}</span></span>
+                                <span className="text-rose-300 font-semibold">Strike-off Applied 🏷️</span>
                               </div>
                             </div>
                           )}
 
                           {/* Bulk Tier Specials Info */}
-                          {product.prices[rid].bulkTiers && product.prices[rid].bulkTiers!.length > 0 && (
+                          {priceDisplayMode !== 'SELL_BACK' && product.prices[rid].bulkTiers && product.prices[rid].bulkTiers!.length > 0 && (
                             <div className="bg-amber-950/30 border border-amber-500/30 p-1.5 rounded-lg text-[10px] space-y-0.5">
                               <div className="text-amber-300 font-bold flex items-center justify-between">
                                 <span className="flex items-center gap-1">
@@ -598,36 +681,54 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                             </div>
                           )}
 
-                          {/* Sell Price (Bid) */}
-                          <div className="flex justify-between items-baseline text-xs text-slate-400 border-t border-slate-800/80 pt-1">
-                            <span>Sell-Back (Bid):</span>
-                            <span className="font-mono font-medium text-slate-300">
-                              {formatMoney(metrics.sellPriceSgd, metrics.sellPriceUsd)}
-                            </span>
-                          </div>
+                          {/* Secondary Price Lines */}
+                          {priceDisplayMode === 'BUY' && (
+                            <>
+                              <div className="flex justify-between items-baseline text-xs text-slate-400 border-t border-slate-800/80 pt-1">
+                                <span>Sell-Back (Bid):</span>
+                                <span className="font-mono font-medium text-slate-300">
+                                  {formatMoney(metrics.sellPriceSgd, metrics.sellPriceUsd)}
+                                </span>
+                              </div>
 
-                          {/* Premium Above Spot */}
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-400">Premium:</span>
-                            {offer ? (
-                              <span className="font-mono font-bold px-1.5 py-0.5 rounded text-[11px] bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                                <span className="line-through text-slate-500 mr-1">+{offer.originalPremiumPct}%</span>
-                                +{metrics.premiumPct}%
-                              </span>
-                            ) : (
-                              <span
-                                className={`font-mono font-bold px-1.5 py-0.5 rounded text-[11px] ${
-                                  metrics.premiumPct <= 3.5
-                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                    : metrics.premiumPct <= 10.0
-                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                }`}
-                              >
-                                +{metrics.premiumPct}%
-                              </span>
-                            )}
-                          </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-400">Buy Premium:</span>
+                                {offer ? (
+                                  <span className="font-mono font-bold px-1.5 py-0.5 rounded text-[11px] bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                    <span className="line-through text-slate-500 mr-1">+{offer.originalPremiumPct}%</span>
+                                    +{metrics.premiumPct}%
+                                  </span>
+                                ) : (
+                                  <span
+                                    className={`font-mono font-bold px-1.5 py-0.5 rounded text-[11px] ${
+                                      metrics.premiumPct <= 3.5
+                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                        : metrics.premiumPct <= 10.0
+                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                    }`}
+                                  >
+                                    +{metrics.premiumPct}%
+                                  </span>
+                                )}
+                              </div>
+                            </>
+                          )}
+
+                          {priceDisplayMode === 'BOTH' && (
+                            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 space-y-1 text-xs">
+                              <div className="flex justify-between items-baseline">
+                                <span className="text-slate-400">Sell-Back (Bid):</span>
+                                <span className="font-mono text-emerald-400 font-bold">
+                                  {formatMoney(metrics.sellPriceSgd, metrics.sellPriceUsd)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center border-t border-slate-800 pt-1 text-[11px]">
+                                <span className="text-slate-400">Net Buy-Sell Spread:</span>
+                                <span className="font-mono text-indigo-300 font-bold">{metrics.spreadPct}%</span>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Buy-Sell Spread */}
                           <div className="flex justify-between items-center text-xs text-slate-400">
@@ -656,7 +757,7 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                               className={`w-full py-1.5 px-2 text-xs font-bold rounded-lg border flex items-center justify-center space-x-1.5 transition-all shadow-sm ${
                                 offer
                                   ? 'bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-slate-950 border-rose-400'
-                                  : isBest
+                                  : isBestBuy
                                   ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400'
                                   : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/80'
                               }`}

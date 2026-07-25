@@ -57,7 +57,7 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
   );
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'Gold' | 'Silver' | 'Coin' | 'Bar'>('ALL');
-  const [chartMetric, setChartMetric] = useState<'buyPremium' | 'bulkPremium' | 'spread'>('buyPremium');
+  const [chartMetric, setChartMetric] = useState<'buyPremium' | 'sellPremium' | 'sellBackPrice' | 'bulkPremium' | 'spread'>('buyPremium');
 
   // Filter available products for selector
   const filteredProductOptions = useMemo(() => {
@@ -353,23 +353,46 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
             <span>Bar Chart Comparison Metric:</span>
           </div>
 
-          <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+          <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold flex-wrap gap-1">
             <button
               onClick={() => setChartMetric('buyPremium')}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
                 chartMetric === 'buyPremium'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span>Standard Premium (%)</span>
+              <span>Buy Premium (%)</span>
+            </button>
+
+            <button
+              onClick={() => setChartMetric('sellPremium')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                chartMetric === 'sellPremium'
+                  ? 'bg-emerald-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              <span>💰 Sell-Back Premium (%)</span>
+            </button>
+
+            <button
+              onClick={() => setChartMetric('sellBackPrice')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                chartMetric === 'sellBackPrice'
+                  ? 'bg-emerald-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🏷️ Sell-Back Price ($)</span>
             </button>
 
             <button
               onClick={() => setChartMetric('bulkPremium')}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
                 chartMetric === 'bulkPremium'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -381,10 +404,11 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
               onClick={() => setChartMetric('spread')}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
                 chartMetric === 'spread'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  ? 'bg-indigo-500 text-white shadow-md font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
+              <Scale className="w-3.5 h-3.5" />
               <span>Buy-Sell Spread (%)</span>
             </button>
           </div>
@@ -398,7 +422,9 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
               const rm = retailerMetrics[rid];
               if (!rm) return null;
 
-              const isBest = rid === bestPremiumRetailerId;
+              // Determine best retailer depending on metric
+              const isBestSellMetric = chartMetric === 'sellPremium' || chartMetric === 'sellBackPrice';
+              const isBest = isBestSellMetric ? rm.isHighestSellPrice : rid === bestPremiumRetailerId;
 
               // Determine metric value
               let displayPct = rm.premiumPct;
@@ -406,7 +432,14 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
 
               const bulkTier = product.prices[rid]?.bulkTiers?.[0];
 
-              if (chartMetric === 'bulkPremium') {
+              if (chartMetric === 'sellPremium') {
+                displayPct = rm.sellPremiumPct;
+                displayLabel = 'Retailer Buyback Payout Premium';
+              } else if (chartMetric === 'sellBackPrice') {
+                const sellPrice = currency === 'USD' ? rm.sellPriceUsd : rm.sellPriceSgd;
+                displayPct = (sellPrice / currentSpotMelt) * 100 - 100;
+                displayLabel = `Sell-Back Payout Price`;
+              } else if (chartMetric === 'bulkPremium') {
                 if (bulkTier) {
                   displayPct = bulkTier.bulkPremiumPct;
                   displayLabel = `Bulk (${bulkTier.label})`;
@@ -419,11 +452,12 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
                 displayLabel = 'Buy-Sell Spread';
               }
 
-              // Calculate bar width percentage relative to max Chart Value
-              const barWidthPct = Math.min(100, Math.max(8, (displayPct / (maxChartValue * 1.15)) * 100));
+              // Calculate bar width percentage
+              const barWidthPct = Math.min(100, Math.max(12, ((displayPct + 10) / (maxChartValue + 10)) * 100));
 
               // Price values
               const buyPrice = currency === 'USD' ? rm.buyPriceUsd : rm.buyPriceSgd;
+              const sellPrice = currency === 'USD' ? rm.sellPriceUsd : rm.sellPriceSgd;
               const dollarPremium = buyPrice - currentSpotMelt;
 
               return (
@@ -444,7 +478,7 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
                       {isBest && (
                         <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-500/40 flex items-center space-x-1">
                           <Trophy className="w-3 h-3 text-emerald-400" />
-                          <span>LOWEST PREMIUM</span>
+                          <span>{isBestSellMetric ? 'HIGHEST BUYBACK OFFER' : 'LOWEST PREMIUM'}</span>
                         </span>
                       )}
 
@@ -458,10 +492,10 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
                         Buy: <strong className="text-slate-100 font-bold">{currencySymbol}{buyPrice.toFixed(2)}</strong>
                       </span>
                       <span className="text-slate-400">
-                        Markup: <strong className="text-amber-300 font-bold">+{currencySymbol}{dollarPremium.toFixed(2)}</strong>
+                        Sell-Back: <strong className="text-emerald-300 font-bold">{currencySymbol}{sellPrice.toFixed(2)}</strong>
                       </span>
                       <span className={`text-sm font-black ${isBest ? 'text-emerald-400' : 'text-amber-300'}`}>
-                        +{displayPct.toFixed(2)}%
+                        {displayPct >= 0 ? `+${displayPct.toFixed(2)}%` : `${displayPct.toFixed(2)}%`}
                       </span>
                     </div>
                   </div>
@@ -473,11 +507,13 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
                       className={`h-full rounded-lg transition-all duration-500 flex items-center justify-end px-2 ${
                         isBest
                           ? 'bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-sm'
+                          : isBestSellMetric
+                          ? 'bg-gradient-to-r from-emerald-700 to-teal-500'
                           : 'bg-gradient-to-r from-amber-600 to-amber-400'
                       }`}
                     >
                       <span className="text-[10px] font-black text-slate-950 font-mono">
-                        +{displayPct.toFixed(2)}%
+                        {displayPct >= 0 ? `+${displayPct.toFixed(2)}%` : `${displayPct.toFixed(2)}%`}
                       </span>
                     </div>
                   </div>

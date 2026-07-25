@@ -16,6 +16,8 @@ interface ProductDetailModalProps {
   activeAlertProductIds?: Set<string>;
 }
 
+const roundTwoDecimals = (val: number) => Math.round(val * 100) / 100;
+
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   productMetrics,
   currency,
@@ -242,12 +244,15 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           onSelectSpecialOffer(product, rid, offer);
                         }
                       }}
-                      className="mb-3 p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl text-xs space-y-1 cursor-pointer transition-colors group"
+                      className="mb-3 p-3 bg-gradient-to-r from-rose-950/60 to-slate-900 hover:from-rose-900/60 border border-rose-500/40 rounded-xl text-xs space-y-1.5 cursor-pointer transition-colors group shadow-md"
                     >
                       <div className="font-bold text-rose-200 flex items-center justify-between">
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1.5">
                           <Tag className="w-3.5 h-3.5 text-rose-400" />
-                          {offer.title}
+                          <span>{offer.title}</span>
+                          <span className="bg-rose-500/30 text-rose-200 px-1.5 py-0.2 rounded text-[10px] uppercase font-mono font-extrabold border border-rose-500/40">
+                            Strike-Off Sale
+                          </span>
                         </span>
                         <div className="flex items-center gap-2">
                           {offer.expiresIn && (
@@ -256,14 +261,28 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                               {offer.expiresIn}
                             </span>
                           )}
-                          <span className="text-[10px] bg-rose-500/30 text-rose-200 px-1.5 py-0.5 rounded font-bold group-hover:bg-rose-500 group-hover:text-white transition-colors">
-                            View Special Deal ↗
+                          <span className="text-[10px] bg-rose-500/40 text-rose-100 px-2 py-0.5 rounded font-bold group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                            Inspect Sale Analysis ↗
                           </span>
                         </div>
                       </div>
+
+                      {offer.salePageAnalysis && (
+                        <div className="text-[11px] text-slate-300 bg-slate-950/80 p-1.5 rounded border border-rose-500/20 font-mono flex items-center gap-2">
+                          <span className="text-rose-400">📷 Image Analysis:</span>
+                          <span className="text-slate-200 truncate">{offer.salePageAnalysis}</span>
+                        </div>
+                      )}
+
                       <div className="text-slate-300 flex items-center justify-between text-[11px] pt-1 border-t border-rose-500/20">
-                        <span>Total Offer Savings: <strong className="text-emerald-300 font-mono">S${offer.savingsSgd.toFixed(2)}</strong></span>
-                        {offer.code && <span className="font-mono bg-slate-900 px-2 py-0.5 rounded text-amber-300 border border-amber-500/40">Promo Code: {offer.code}</span>}
+                        <span>
+                          Official Listed Price: <span className="line-through text-slate-400 font-mono">S${offer.originalBuyPriceSgd.toFixed(2)}</span>
+                          {' → '}
+                          Sale Price: <strong className="text-rose-300 font-mono">S${offer.promoBuyPriceSgd.toFixed(2)}</strong>
+                        </span>
+                        <span className="text-emerald-300 font-mono font-bold">
+                          SAVE S${offer.savingsSgd.toFixed(2)} ({offer.discountPct || roundTwoDecimals(((offer.originalBuyPriceSgd - offer.promoBuyPriceSgd) / offer.originalBuyPriceSgd) * 100)}% OFF)
+                        </span>
                       </div>
                     </div>
                   )}

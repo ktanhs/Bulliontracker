@@ -1,7 +1,7 @@
 import React from 'react';
 import { ProductFilter, MetalType, FormFactor } from '../types';
 import { MANUFACTURERS } from '../data/bullionData';
-import { Search, LayoutGrid, Table, ArrowUpDown, Scale, Tag, X, RefreshCw, Flame, Store, Building2, ShieldCheck, Layers } from 'lucide-react';
+import { Search, LayoutGrid, Table, ArrowUpDown, Scale, Tag, X, RefreshCw, Flame, Store, Building2, ShieldCheck, Layers, ShoppingCart, DollarSign } from 'lucide-react';
 
 interface FilterControlsProps {
   filter: ProductFilter;
@@ -9,6 +9,8 @@ interface FilterControlsProps {
   viewMode: 'table' | 'grid';
   setViewMode: (v: 'table' | 'grid') => void;
   totalProductsCount: number;
+  priceDisplayMode?: 'BUY' | 'SELL_BACK' | 'BOTH';
+  setPriceDisplayMode?: (mode: 'BUY' | 'SELL_BACK' | 'BOTH') => void;
 }
 
 export const FilterControls: React.FC<FilterControlsProps> = ({
@@ -17,6 +19,8 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   viewMode,
   setViewMode,
   totalProductsCount,
+  priceDisplayMode = 'BUY',
+  setPriceDisplayMode,
 }) => {
   const isAnyFilterActive =
     filter.metal !== 'ALL' ||
@@ -49,7 +53,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-6 shadow-sm space-y-4">
+    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-6 shadow-sm space-y-4 overflow-hidden max-w-full">
       {/* Search Bar Row: Separate fields for Product Name & Specific Weight */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
         {/* Product Name Search */}
@@ -138,29 +142,33 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
           <span>🪙</span> Coins:
         </span>
         {[
-          { label: 'Maple Leaf', query: 'Maple Leaf' },
-          { label: 'American Eagle', query: 'American Eagle' },
-          { label: 'Krugerrand', query: 'Krugerrand' },
-          { label: 'Sovereign', query: 'Sovereign' },
-          { label: 'Kangaroo', query: 'Kangaroo' },
-          { label: 'Philharmonic', query: 'Philharmonic' },
-          { label: 'Panda', query: 'Panda' },
-          { label: 'Libertad', query: 'Libertad' },
-          { label: 'Vreneli', query: 'Vreneli' },
-          { label: 'Lunar Dragon', query: 'Lunar' },
-          { label: 'Tudor Beasts', query: 'Tudor' },
-          { label: 'Noah\'s Ark', query: 'Noah' },
-          { label: 'Elephant', query: 'Elephant' },
+          { label: 'Lunar Snake (2025)', query: 'Snake', formFactor: 'Coin' as FormFactor },
+          { label: 'Lunar Dragon (2024)', query: 'Dragon', formFactor: 'Coin' as FormFactor },
+          { label: 'All Lunar Coins', query: 'Lunar', formFactor: 'Coin' as FormFactor },
+          { label: 'Perth Mint Coins', query: 'Perth Mint', formFactor: 'Coin' as FormFactor },
+          { label: 'RCM Coins', query: 'Royal Canadian Mint', formFactor: 'Coin' as FormFactor },
+          { label: 'Maple Leaf', query: 'Maple Leaf', formFactor: 'Coin' as FormFactor },
+          { label: 'American Eagle', query: 'American Eagle', formFactor: 'Coin' as FormFactor },
+          { label: 'Britannia', query: 'Britannia', formFactor: 'Coin' as FormFactor },
+          { label: 'Krugerrand', query: 'Krugerrand', formFactor: 'Coin' as FormFactor },
+          { label: 'Sovereign', query: 'Sovereign', formFactor: 'Coin' as FormFactor },
+          { label: 'Kangaroo', query: 'Kangaroo', formFactor: 'Coin' as FormFactor },
+          { label: 'Philharmonic', query: 'Philharmonic', formFactor: 'Coin' as FormFactor },
+          { label: 'Panda', query: 'Panda', formFactor: 'Coin' as FormFactor },
+          { label: 'Libertad', query: 'Libertad', formFactor: 'Coin' as FormFactor },
+          { label: 'Tudor Beasts', query: 'Tudor', formFactor: 'Coin' as FormFactor },
         ].map((tag) => {
-          const isActive = filter.nameQuery.toLowerCase() === tag.query.toLowerCase() || filter.searchQuery.toLowerCase() === tag.query.toLowerCase();
+          const isActive =
+            (filter.nameQuery.toLowerCase() === tag.query.toLowerCase() || filter.searchQuery.toLowerCase() === tag.query.toLowerCase()) &&
+            (filter.formFactor === 'ALL' || filter.formFactor === tag.formFactor);
           return (
             <button
               key={tag.label}
               onClick={() => {
                 if (isActive) {
-                  setFilter((prev) => ({ ...prev, nameQuery: '', searchQuery: '' }));
+                  setFilter((prev) => ({ ...prev, nameQuery: '', searchQuery: '', formFactor: 'ALL' }));
                 } else {
-                  setFilter((prev) => ({ ...prev, nameQuery: tag.query, searchQuery: '' }));
+                  setFilter((prev) => ({ ...prev, nameQuery: tag.query, searchQuery: '', formFactor: tag.formFactor }));
                 }
               }}
               className={`px-2 py-0.5 rounded-lg border text-[11px] transition-all font-medium ${
@@ -181,30 +189,36 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
           <span>🧱</span> Bars:
         </span>
         {[
-          { label: 'PAMP Fortuna', query: 'PAMP' },
-          { label: 'Valcambi', query: 'Valcambi' },
-          { label: 'CombiBar', query: 'CombiBar' },
-          { label: 'Argor-Heraeus', query: 'Argor' },
-          { label: 'Kinebar', query: 'Kinebar' },
-          { label: 'Heraeus', query: 'Heraeus' },
-          { label: 'Metalor', query: 'Metalor' },
-          { label: 'Nadir', query: 'Nadir' },
-          { label: 'Credit Suisse', query: 'Credit Suisse' },
-          { label: 'Asahi', query: 'Asahi' },
-          { label: 'Geiger', query: 'Geiger' },
-          { label: 'Scottsdale', query: 'Scottsdale' },
-          { label: 'Cast Bars', query: 'Cast' },
-          { label: 'Minted Bars', query: 'Minted' },
+          { label: 'Perth Mint Bars', query: 'Perth Mint', formFactor: 'Bar' as FormFactor },
+          { label: 'Royal Canadian Mint (RCM) Bars', query: 'Royal Canadian Mint', formFactor: 'Bar' as FormFactor },
+          { label: 'PAMP Fortuna', query: 'PAMP', formFactor: 'Bar' as FormFactor },
+          { label: 'ABC Bullion', query: 'ABC', formFactor: 'Bar' as FormFactor },
+          { label: 'Southern Cross', query: 'Southern Cross', formFactor: 'Bar' as FormFactor },
+          { label: 'Valcambi', query: 'Valcambi', formFactor: 'Bar' as FormFactor },
+          { label: 'CombiBar', query: 'CombiBar', formFactor: 'Bar' as FormFactor },
+          { label: 'Argor-Heraeus', query: 'Argor', formFactor: 'Bar' as FormFactor },
+          { label: 'Kinebar', query: 'Kinebar', formFactor: 'Bar' as FormFactor },
+          { label: 'Heraeus', query: 'Heraeus', formFactor: 'Bar' as FormFactor },
+          { label: 'Metalor', query: 'Metalor', formFactor: 'Bar' as FormFactor },
+          { label: 'Nadir', query: 'Nadir', formFactor: 'Bar' as FormFactor },
+          { label: 'Credit Suisse', query: 'Credit Suisse', formFactor: 'Bar' as FormFactor },
+          { label: 'Asahi', query: 'Asahi', formFactor: 'Bar' as FormFactor },
+          { label: 'Geiger', query: 'Geiger', formFactor: 'Bar' as FormFactor },
+          { label: 'Scottsdale', query: 'Scottsdale', formFactor: 'Bar' as FormFactor },
+          { label: 'Cast Bars', query: 'Cast', formFactor: 'Bar' as FormFactor },
+          { label: 'Minted Bars', query: 'Minted', formFactor: 'Bar' as FormFactor },
         ].map((tag) => {
-          const isActive = filter.nameQuery.toLowerCase() === tag.query.toLowerCase() || filter.searchQuery.toLowerCase() === tag.query.toLowerCase();
+          const isActive =
+            (filter.nameQuery.toLowerCase() === tag.query.toLowerCase() || filter.searchQuery.toLowerCase() === tag.query.toLowerCase()) &&
+            (filter.formFactor === 'ALL' || filter.formFactor === tag.formFactor);
           return (
             <button
               key={tag.label}
               onClick={() => {
                 if (isActive) {
-                  setFilter((prev) => ({ ...prev, nameQuery: '', searchQuery: '' }));
+                  setFilter((prev) => ({ ...prev, nameQuery: '', searchQuery: '', formFactor: 'ALL' }));
                 } else {
-                  setFilter((prev) => ({ ...prev, nameQuery: tag.query, searchQuery: '' }));
+                  setFilter((prev) => ({ ...prev, nameQuery: tag.query, searchQuery: '', formFactor: tag.formFactor }));
                 }
               }}
               className={`px-2 py-0.5 rounded-lg border text-[11px] transition-all font-medium ${
@@ -367,7 +381,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
             <span>LBMA Good Delivery</span>
           </button>
 
-          {/* Special Offers Toggle Pill */}
+          {/* Special Offers / Strike-Off Discounts Toggle Pill */}
           <button
             id="filter-special-offers-btn"
             onClick={() => setFilter((prev) => ({ ...prev, specialOffersOnly: !prev.specialOffersOnly }))}
@@ -378,7 +392,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
             }`}
           >
             <Flame className={`w-3.5 h-3.5 ${filter.specialOffersOnly ? 'text-rose-400 fill-rose-400 animate-pulse' : 'text-rose-400'}`} />
-            <span>Active Promos</span>
+            <span>🏷️ Strike-Off Discounts</span>
           </button>
 
           {/* Bulk Tier Specials Toggle Pill */}
@@ -407,48 +421,97 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
           )}
         </div>
 
-        {/* Sort & View Mode Switcher */}
-        <div className="flex items-center space-x-2.5 justify-between lg:justify-end">
-          <div className="flex items-center space-x-2 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700/80 text-xs">
-            <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-slate-400 hidden sm:inline">Sort:</span>
-            <select
-              id="sort-by-select"
-              value={filter.sortBy}
-              onChange={(e) => setFilter((prev) => ({ ...prev, sortBy: e.target.value as any }))}
-              className="bg-transparent text-slate-100 font-medium focus:outline-none cursor-pointer"
-            >
-              <option value="weightDesc" className="bg-slate-800 text-amber-300 font-bold">Weight (Heavy to Light ⚖️)</option>
-              <option value="weightAsc" className="bg-slate-800 text-amber-300 font-bold">Weight (Light to Heavy ⚖️)</option>
-              <option value="lowestPremium" className="bg-slate-800 text-white">Lowest Premium %</option>
-              <option value="lowestSpread" className="bg-slate-800 text-white">Lowest Buy-Sell Spread</option>
-              <option value="lowestBuyPrice" className="bg-slate-800 text-white">Lowest Buy Price</option>
-              <option value="name" className="bg-slate-800 text-white">Product Name (A-Z)</option>
-            </select>
-          </div>
+        {/* Sort & View Mode Switcher + Sell-Back Comparison Toggle Tab */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full lg:w-auto">
+          {/* Price & Sell-Back Comparison Toggle Tab */}
+          {setPriceDisplayMode && (
+            <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-700/80 shadow-inner overflow-x-auto scrollbar-none">
+              <button
+                id="mode-toggle-buy-btn"
+                onClick={() => setPriceDisplayMode('BUY')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  priceDisplayMode === 'BUY'
+                    ? 'bg-amber-500 text-slate-950 shadow-md ring-1 ring-amber-400 font-black'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+                title="View customer online buy prices and retail shop counter prices"
+              >
+                <ShoppingCart className="w-3.5 h-3.5" />
+                <span>🛒 Buy Prices & Premiums</span>
+              </button>
 
-          {/* View Mode Toggle */}
-          <div className="flex bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
-            <button
-              id="view-table-btn"
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'table' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-              }`}
-              title="Table Matrix View"
-            >
-              <Table className="w-4 h-4" />
-            </button>
-            <button
-              id="view-grid-btn"
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'grid' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-              }`}
-              title="Card Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
+              <button
+                id="mode-toggle-sell-btn"
+                onClick={() => setPriceDisplayMode('SELL_BACK')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  priceDisplayMode === 'SELL_BACK'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md ring-1 ring-emerald-400 font-black'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+                title="View retailer buyback payout prices and sell-back premiums over spot"
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                <span>💰 Sell-Back Prices & Premiums</span>
+              </button>
+
+              <button
+                id="mode-toggle-both-btn"
+                onClick={() => setPriceDisplayMode('BOTH')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  priceDisplayMode === 'BOTH'
+                    ? 'bg-indigo-500 text-white shadow-md ring-1 ring-indigo-400 font-black'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+                title="View side-by-side Buy Ask Price vs Sell Bid Price and net spread"
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span>⚖️ Buy vs Sell Spread</span>
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center space-x-2.5 justify-between sm:justify-end">
+            <div className="flex items-center space-x-2 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700/80 text-xs">
+              <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-slate-400 hidden sm:inline">Sort:</span>
+              <select
+                id="sort-by-select"
+                value={filter.sortBy}
+                onChange={(e) => setFilter((prev) => ({ ...prev, sortBy: e.target.value as any }))}
+                className="bg-transparent text-slate-100 font-medium focus:outline-none cursor-pointer"
+              >
+                <option value="weightDesc" className="bg-slate-800 text-amber-300 font-bold">Weight (Heavy to Light ⚖️)</option>
+                <option value="weightAsc" className="bg-slate-800 text-amber-300 font-bold">Weight (Light to Heavy ⚖️)</option>
+                <option value="lowestPremium" className="bg-slate-800 text-white">Lowest Buy Premium %</option>
+                <option value="lowestSpread" className="bg-slate-800 text-white">Lowest Buy-Sell Spread</option>
+                <option value="lowestBuyPrice" className="bg-slate-800 text-white">Lowest Buy Price</option>
+                <option value="name" className="bg-slate-800 text-white">Product Name (A-Z)</option>
+              </select>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
+              <button
+                id="view-table-btn"
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg transition-all ${
+                  viewMode === 'table' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Table Matrix View"
+              >
+                <Table className="w-4 h-4" />
+              </button>
+              <button
+                id="view-grid-btn"
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg transition-all ${
+                  viewMode === 'grid' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Card Grid View"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

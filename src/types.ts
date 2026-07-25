@@ -55,7 +55,10 @@ export interface SpecialOffer {
   code?: string;                 // Promo code
   expiresIn?: string;            // Expiry countdown
   dealUrl?: string;              // Direct link to retailer offer page
-  description?: string;           // Special offer details
+  description?: string;          // Special offer details
+  isStrikeOffDiscount?: boolean; // Indicates a strike-through discount on retailer sale page
+  salePageAnalysis?: string;     // Verified note on retailer sale page listing image / tag
+  discountPct?: number;          // % discount relative to official listed price
 }
 
 export interface RetailerPrice {
@@ -107,12 +110,14 @@ export interface ComputedProductMetrics {
     sellPriceSgd: number;
     sellPriceUsd: number;
     premiumPct: number;        // ((BuyPrice - SpotValue) / SpotValue) * 100
+    sellPremiumPct: number;    // ((SellPrice - SpotValue) / SpotValue) * 100
     spreadPct: number;         // ((BuyPrice - SellPrice) / BuyPrice) * 100
     spreadValueSgd: number;    // BuyPrice - SellPrice
     spreadValueUsd: number;
     isLowestBuyPrice: boolean;
     isLowestPremium: boolean;
     isLowestSpread: boolean;
+    isHighestSellPrice?: boolean;
   }>;
   bestBuyRetailerId: RetailerId;
   bestSellRetailerId: RetailerId;

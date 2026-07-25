@@ -47,6 +47,7 @@ export default function App() {
     'comparison'
   );
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [priceDisplayMode, setPriceDisplayMode] = useState<'BUY' | 'SELL_BACK' | 'BOTH'>('BUY');
 
   // Compare premiums product modal / view selection
   const [compareModalProduct, setCompareModalProduct] = useState<ComputedProductMetrics | null>(null);
@@ -305,6 +306,8 @@ export default function App() {
       .replace(/heraus/g, 'heraeus')
       .replace(/herause/g, 'heraeus')
       .replace(/heraous/g, 'heraeus')
+      .replace(/\bbritanias?\b/g, 'britannia')
+      .replace(/\bbritannias\b/g, 'britannia')
       .replace(/\bkruger\b/g, 'krugerrand')
       .replace(/\bkrugerrands\b/g, 'krugerrand')
       .replace(/\broos?\b/g, 'kangaroo')
@@ -325,6 +328,12 @@ export default function App() {
       .replace(/\bnoahs?\b/g, 'noah')
       .replace(/\bguineas\b/g, 'guinea')
       .replace(/\btudors?\b/g, 'tudor')
+      .replace(/\brcm\b/g, 'royal canadian mint')
+      .replace(/\bcanadian mint\b/g, 'royal canadian mint')
+      .replace(/\bperth mints?\b/g, 'perth mint')
+      .replace(/\babc\b/g, 'abc bullion')
+      .replace(/\babc refinery\b/g, 'abc bullion')
+      .replace(/\bsouthern cross\b/g, 'southern cross')
       .replace(/\bpamps?\b/g, 'pamp suisse')
       .replace(/\bfortunas?\b/g, 'fortuna')
       .replace(/\bcombibars?\b/g, 'combibar')
@@ -579,6 +588,8 @@ export default function App() {
               viewMode={viewMode}
               setViewMode={setViewMode}
               totalProductsCount={filteredProducts.length}
+              priceDisplayMode={priceDisplayMode}
+              setPriceDisplayMode={setPriceDisplayMode}
             />
 
             {viewMode === 'table' ? (
@@ -594,6 +605,8 @@ export default function App() {
                 onSortByWeight={(dir) => setFilter((prev) => ({ ...prev, sortBy: dir === 'asc' ? 'weightAsc' : 'weightDesc' }))}
                 activeAlertProductIds={activeAlertProductIds}
                 isMarketClosed={spotPrices.marketStatus === 'CLOSED' || spotPrices.isLive === false}
+                priceDisplayMode={priceDisplayMode}
+                setPriceDisplayMode={setPriceDisplayMode}
               />
             ) : (
               <ProductCardGrid
@@ -606,6 +619,7 @@ export default function App() {
                 onComparePremiums={(p) => setCompareModalProduct(p)}
                 activeAlertProductIds={activeAlertProductIds}
                 isMarketClosed={spotPrices.marketStatus === 'CLOSED' || spotPrices.isLive === false}
+                priceDisplayMode={priceDisplayMode}
               />
             )}
           </div>
