@@ -132,6 +132,93 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
         </div>
       </div>
 
+      {/* Quick Search Chips for Popular Coin Brands */}
+      <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs text-slate-400">
+        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1 mr-1">
+          <span>🪙</span> Coins:
+        </span>
+        {[
+          { label: 'Maple Leaf', query: 'Maple Leaf' },
+          { label: 'American Eagle', query: 'American Eagle' },
+          { label: 'Krugerrand', query: 'Krugerrand' },
+          { label: 'Sovereign', query: 'Sovereign' },
+          { label: 'Kangaroo', query: 'Kangaroo' },
+          { label: 'Philharmonic', query: 'Philharmonic' },
+          { label: 'Panda', query: 'Panda' },
+          { label: 'Libertad', query: 'Libertad' },
+          { label: 'Vreneli', query: 'Vreneli' },
+          { label: 'Lunar Dragon', query: 'Lunar' },
+          { label: 'Tudor Beasts', query: 'Tudor' },
+          { label: 'Noah\'s Ark', query: 'Noah' },
+          { label: 'Elephant', query: 'Elephant' },
+        ].map((tag) => {
+          const isActive = filter.nameQuery.toLowerCase() === tag.query.toLowerCase() || filter.searchQuery.toLowerCase() === tag.query.toLowerCase();
+          return (
+            <button
+              key={tag.label}
+              onClick={() => {
+                if (isActive) {
+                  setFilter((prev) => ({ ...prev, nameQuery: '', searchQuery: '' }));
+                } else {
+                  setFilter((prev) => ({ ...prev, nameQuery: tag.query, searchQuery: '' }));
+                }
+              }}
+              className={`px-2 py-0.5 rounded-lg border text-[11px] transition-all font-medium ${
+                isActive
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-bold shadow-sm'
+                  : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700/70 hover:border-slate-600'
+              }`}
+            >
+              {tag.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Quick Search Chips for Popular Bar Brands & Refinement */}
+      <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs text-slate-400">
+        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1 mr-1">
+          <span>🧱</span> Bars:
+        </span>
+        {[
+          { label: 'PAMP Fortuna', query: 'PAMP' },
+          { label: 'Valcambi', query: 'Valcambi' },
+          { label: 'CombiBar', query: 'CombiBar' },
+          { label: 'Argor-Heraeus', query: 'Argor' },
+          { label: 'Kinebar', query: 'Kinebar' },
+          { label: 'Heraeus', query: 'Heraeus' },
+          { label: 'Metalor', query: 'Metalor' },
+          { label: 'Nadir', query: 'Nadir' },
+          { label: 'Credit Suisse', query: 'Credit Suisse' },
+          { label: 'Asahi', query: 'Asahi' },
+          { label: 'Geiger', query: 'Geiger' },
+          { label: 'Scottsdale', query: 'Scottsdale' },
+          { label: 'Cast Bars', query: 'Cast' },
+          { label: 'Minted Bars', query: 'Minted' },
+        ].map((tag) => {
+          const isActive = filter.nameQuery.toLowerCase() === tag.query.toLowerCase() || filter.searchQuery.toLowerCase() === tag.query.toLowerCase();
+          return (
+            <button
+              key={tag.label}
+              onClick={() => {
+                if (isActive) {
+                  setFilter((prev) => ({ ...prev, nameQuery: '', searchQuery: '' }));
+                } else {
+                  setFilter((prev) => ({ ...prev, nameQuery: tag.query, searchQuery: '' }));
+                }
+              }}
+              className={`px-2 py-0.5 rounded-lg border text-[11px] transition-all font-medium ${
+                isActive
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold shadow-sm'
+                  : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700/70 hover:border-slate-600'
+              }`}
+            >
+              {tag.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filter Options Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-1 border-t border-slate-800/70">
         <div className="flex flex-wrap items-center gap-2">
