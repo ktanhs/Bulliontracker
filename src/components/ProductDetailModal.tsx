@@ -1,12 +1,13 @@
 import React from 'react';
-import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer } from '../types';
+import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { X, Trophy, ExternalLink, ShieldCheck, Scale, PlusCircle, Flame, Clock, Tag, BellRing, Store, Building2, CheckCircle2, Layers, BarChart2, ShoppingCart } from 'lucide-react';
+import { X, Trophy, ExternalLink, ShieldCheck, Scale, PlusCircle, Flame, Clock, Tag, BellRing, Store, Building2, CheckCircle2, Layers, BarChart2, ShoppingCart, Radio } from 'lucide-react';
 import { openRetailerListing } from '../utils/urlUtils';
 
 interface ProductDetailModalProps {
   productMetrics: ComputedProductMetrics | null;
   currency: Currency;
+  spotPrices?: SpotPrices;
   onClose: () => void;
   onAddToCart: (productId: string, retailerId: RetailerId) => void;
   onSelectSpecialOffer?: (product: Product, retailerId: RetailerId, offer: SpecialOffer) => void;
@@ -18,6 +19,7 @@ interface ProductDetailModalProps {
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   productMetrics,
   currency,
+  spotPrices,
   onClose,
   onAddToCart,
   onSelectSpecialOffer,
@@ -62,6 +64,26 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         >
           <X className="w-5 h-5" />
         </button>
+
+        {/* Live Spot Price Benchmark Banner inside Window */}
+        {spotPrices && (
+          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+            <div className="flex items-center space-x-2">
+              <Radio className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-slate-400">Benchmark Spot:</span>
+              <strong className="text-amber-300">
+                ${spotPrices.goldUsdPerOz.toFixed(2)} Gold
+              </strong>
+              <span className="text-slate-500">|</span>
+              <strong className="text-slate-200">
+                ${spotPrices.silverUsdPerOz.toFixed(2)} Silver
+              </strong>
+            </div>
+            <span className="text-slate-400 text-[11px]">
+              1 USD = {spotPrices.usdToSgdRate.toFixed(4)} SGD
+            </span>
+          </div>
+        )}
 
         {/* Product Spec Header */}
         <div className="flex items-start space-x-4">
@@ -154,8 +176,22 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             {retailerKeys.map((rid) => {
               const ret = RETAILERS[rid];
               const metrics = retailerMetrics[rid];
-              const offer = product.prices[rid].specialOffer;
+              const offer = product.prices[rid]?.specialOffer;
               const isBest = rid === bestBuyRetailerId;
+
+              if (!metrics?.inStock || metrics.buyPriceSgd <= 0) {
+                return (
+                  <div key={rid} className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-between text-xs">
+                    <span className={`px-2.5 py-0.5 rounded text-xs font-bold border ${ret.badgeBg}`}>
+                      {ret.name}
+                    </span>
+                    <span className="text-slate-500 font-mono flex items-center gap-1.5">
+                      <Store className="w-3.5 h-3.5 text-slate-600" />
+                      Not Offered / Out of Stock at {ret.shortName}
+                    </span>
+                  </div>
+                );
+              }
 
               return (
                 <div

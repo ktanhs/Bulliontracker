@@ -49,7 +49,7 @@ export const PriceAlertToast: React.FC<PriceAlertToastProps> = ({
                       PRICE ALERT HIT!
                     </span>
                     <span className="text-[10px] text-slate-400 font-mono">
-                      {new Date(notif.triggeredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(notif.triggeredAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                   <h4 className="text-xs font-bold text-white mt-1 line-clamp-1">{notif.productName}</h4>

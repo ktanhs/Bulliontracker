@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ComputedProductMetrics, Currency, RetailerId, Product } from '../types';
+import { ComputedProductMetrics, Currency, RetailerId, Product, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
 import { getRetailerListingUrl } from '../utils/urlUtils';
 import {
@@ -24,26 +24,33 @@ import {
   TrendingDown,
   Info,
   ShoppingCart,
+  PauseCircle,
+  Clock,
+  Radio,
 } from 'lucide-react';
 
 interface ComparePremiumsViewProps {
   computedProducts: ComputedProductMetrics[];
   currency: Currency;
+  spotPrices?: SpotPrices;
   onAddToCart?: (productId: string, retailerId: RetailerId) => void;
   onSetPriceAlert?: (product: ComputedProductMetrics) => void;
   onCloseModal?: () => void;
   isModal?: boolean;
   initialProductId?: string;
+  isMarketClosed?: boolean;
 }
 
 export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
   computedProducts,
   currency,
+  spotPrices,
   onAddToCart,
   onSetPriceAlert,
   onCloseModal,
   isModal = false,
   initialProductId,
+  isMarketClosed = false,
 }) => {
   const [selectedProductId, setSelectedProductId] = useState<string>(
     initialProductId || computedProducts[0]?.product.id || ''
@@ -151,6 +158,12 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
               <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full">
                 3 Retailers Live
               </span>
+              {isMarketClosed && (
+                <span className="px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-full flex items-center gap-1">
+                  <PauseCircle className="w-3 h-3 text-rose-400" />
+                  At Market Close
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Side-by-side markup over spot price for Silver Bullion, BullionStar & LPM
@@ -168,6 +181,42 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
           </button>
         )}
       </div>
+
+      {/* Spot Price Benchmark Banner inside Window */}
+      {spotPrices && (
+        <div className="bg-slate-950 px-5 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span className="text-slate-400 font-semibold">Gold Spot:</span>
+              <strong className="text-amber-300 font-mono">
+                ${spotPrices.goldUsdPerOz.toFixed(2)} USD/oz
+              </strong>
+              <span className="text-slate-500 font-mono text-[11px]">
+                (S${(spotPrices.goldUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})
+              </span>
+            </div>
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse"></span>
+              <span className="text-slate-400 font-semibold">Silver Spot:</span>
+              <strong className="text-slate-200 font-mono">
+                ${spotPrices.silverUsdPerOz.toFixed(2)} USD/oz
+              </strong>
+              <span className="text-slate-500 font-mono text-[11px]">
+                (S${(spotPrices.silverUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3 text-[11px] font-mono text-slate-400">
+            <span>Forex: 1 USD = {spotPrices.usdToSgdRate.toFixed(4)} SGD</span>
+            <span className="text-slate-600">|</span>
+            <span className="flex items-center gap-1 text-slate-300">
+              <Radio className="w-3 h-3 text-emerald-400" />
+              {spotPrices.marketStatus === 'CLOSED' ? 'At Market Close' : 'Live Feeds Active'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="p-5 space-y-6">

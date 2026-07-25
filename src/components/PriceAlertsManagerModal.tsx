@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PriceAlert, ComputedProductMetrics, Currency, TriggeredAlertNotification } from '../types';
+import { PriceAlert, ComputedProductMetrics, Currency, TriggeredAlertNotification, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
 import {
   X,
@@ -15,12 +15,14 @@ import {
   Sparkles,
   ArrowDown,
   RefreshCw,
+  Radio,
 } from 'lucide-react';
 
 interface PriceAlertsManagerModalProps {
   alerts: PriceAlert[];
   computedProducts: ComputedProductMetrics[];
   currency: Currency;
+  spotPrices?: SpotPrices;
   onClose: () => void;
   onToggleAlert: (id: string) => void;
   onDeleteAlert: (id: string) => void;
@@ -34,6 +36,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
   alerts,
   computedProducts,
   currency,
+  spotPrices,
   onClose,
   onToggleAlert,
   onDeleteAlert,
@@ -94,6 +97,38 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Live Spot Benchmark Bar inside Window */}
+        {spotPrices && (
+          <div className="bg-slate-950 px-5 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span className="text-slate-400 font-semibold">Gold Spot:</span>
+                <strong className="text-amber-300 font-mono">
+                  ${spotPrices.goldUsdPerOz.toFixed(2)} USD/oz
+                </strong>
+                <span className="text-slate-500 font-mono text-[11px]">
+                  (S${(spotPrices.goldUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})
+                </span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse"></span>
+                <span className="text-slate-400 font-semibold">Silver Spot:</span>
+                <strong className="text-slate-200 font-mono">
+                  ${spotPrices.silverUsdPerOz.toFixed(2)} USD/oz
+                </strong>
+                <span className="text-slate-500 font-mono text-[11px]">
+                  (S${(spotPrices.silverUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-400">
+              <Radio className="w-3 h-3 text-emerald-400" />
+              <span>1 USD = {spotPrices.usdToSgdRate.toFixed(4)} SGD</span>
+            </div>
+          </div>
+        )}
 
         {/* Action Controls & Navigation Tabs */}
         <div className="p-4 bg-slate-950/60 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
@@ -240,6 +275,11 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
                               </span>
                             </div>
 
+                            {alert.createdAt && (
+                              <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                Created: {new Date(alert.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            )}
                             {alert.note && (
                               <p className="text-[11px] text-slate-400 italic mt-0.5 truncate">
                                 Note: {alert.note}
@@ -310,7 +350,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
 
                       <div className="text-right">
                         <span className="text-[10px] text-slate-400 font-mono block">
-                          {new Date(notif.triggeredAt).toLocaleTimeString()}
+                          {new Date(notif.triggeredAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         </span>
                         <button
                           onClick={() => {

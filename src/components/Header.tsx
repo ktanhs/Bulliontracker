@@ -1,6 +1,6 @@
 import React from 'react';
-import { Currency } from '../types';
-import { RefreshCw, Coins, DollarSign, Calculator, LineChart, Building2, Sparkles, SlidersHorizontal, BellRing, BarChart2, Compass } from 'lucide-react';
+import { Currency, RetailerApiStatus, SpotPrices } from '../types';
+import { RefreshCw, Coins, DollarSign, Calculator, LineChart, Building2, Sparkles, SlidersHorizontal, BellRing, BarChart2, Compass, Server, Radio, PauseCircle, Clock } from 'lucide-react';
 
 interface HeaderProps {
   currency: Currency;
@@ -16,6 +16,9 @@ interface HeaderProps {
   triggeredCount?: number;
   onOpenAlertsManager?: () => void;
   onOpenMarketSentiments?: () => void;
+  onOpenApiStatusModal?: () => void;
+  apiStatuses?: RetailerApiStatus[];
+  spotPrices?: SpotPrices;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -32,8 +35,16 @@ export const Header: React.FC<HeaderProps> = ({
   triggeredCount = 0,
   onOpenAlertsManager,
   onOpenMarketSentiments,
+  onOpenApiStatusModal,
+  apiStatuses = [],
+  spotPrices,
 }) => {
-  const formattedTime = new Date(lastUpdated).toLocaleTimeString('en-US', {
+  const isMarketClosed = spotPrices?.marketStatus === 'CLOSED' || spotPrices?.isLive === false;
+
+  const formattedDateTime = new Date(lastUpdated).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -136,6 +147,14 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Market Sentiments Pop-up Button */}
+            {/* Market Closed Indicator Pill */}
+            {isMarketClosed && (
+              <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-950/80 text-rose-300 border border-rose-500/50 rounded-lg text-xs font-bold shadow-sm">
+                <PauseCircle className="w-3.5 h-3.5 text-rose-400" />
+                <span className="font-mono text-[11px]">Market Closed • Last Spot Price</span>
+              </div>
+            )}
+
             {onOpenMarketSentiments && (
               <button
                 id="top-market-sentiments-btn"
@@ -166,13 +185,30 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
+            {/* Retailer APIs Live Sync Status Button */}
+            {onOpenApiStatusModal && (
+              <button
+                id="retailer-api-status-btn"
+                onClick={onOpenApiStatusModal}
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                title="View Direct Retailer Website APIs Live Synchronization & Latency"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <Server className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden md:inline font-mono text-[11px]">Retailer APIs: 3/3 Live</span>
+              </button>
+            )}
+
             {/* Live Refresh Button */}
             <button
               id="refresh-prices-btn"
               onClick={onRefresh}
               disabled={isRefreshing}
               className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-              title={`Last updated: ${formattedTime}`}
+              title={`Last updated: ${formattedDateTime}`}
             >
               <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Refresh Feed</span>

@@ -148,6 +148,8 @@ export const DEFAULT_SPOT_PRICES: SpotPrices = {
   goldChange24hPct: +0.65,
   silverChange24hPct: +1.24,
   lastUpdated: new Date().toISOString(),
+  marketStatus: 'OPEN',
+  lastMarketCloseTime: new Date(Date.now() - 3600000 * 18).toISOString(),
 };
 
 export const MANUFACTURERS = [
@@ -157,6 +159,7 @@ export const MANUFACTURERS = [
   'PAMP Suisse',
   'Valcambi',
   'Argor-Heraeus',
+  'Heraeus',
   'Metalor',
   'The Royal Mint',
   'Rand Refinery',
@@ -504,6 +507,188 @@ export const SEED_PRODUCTS: Omit<Product, 'prices'>[] = [
     popular: true,
   },
 
+  // --- HERAEUS & ARGOR-HERAEUS GOLD CAST & MINTED BARS ---
+  {
+    id: 'gold-bar-heraeus-cast-100g',
+    name: '100 Gram Heraeus Cast Gold Bar (.9999 Pure)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 3.21507,
+    weightGrams: 100.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-heraeus-cast-250g',
+    name: '250 Gram Heraeus Cast Gold Bar (.9999 Pure)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 8.03768,
+    weightGrams: 250.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: false,
+  },
+  {
+    id: 'gold-bar-heraeus-cast-500g',
+    name: '500 Gram Heraeus Cast Gold Bar (.9999 Pure)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 16.0754,
+    weightGrams: 500.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-heraeus-cast-1kg',
+    name: '1 kg Heraeus Cast Gold Bar (.9999 Pure)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 32.1507,
+    weightGrams: 1000.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-heraeus-cast-1oz',
+    name: '1 oz Heraeus Cast Gold Bar (.9999 Pure)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 1.0,
+    weightGrams: 31.1035,
+    purity: '.9999 Fine Gold',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-heraeus-minted-1oz',
+    name: '1 oz Heraeus Minted Gold Bar (In Assay Card)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 1.0,
+    weightGrams: 31.1035,
+    purity: '.9999 Fine Gold',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Minted',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-argor-cast-100g',
+    name: '100 Gram Argor-Heraeus Cast Gold Bar (.9999)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 3.21507,
+    weightGrams: 100.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-argor-cast-250g',
+    name: '250 Gram Argor-Heraeus Cast Gold Bar (.9999)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 8.03768,
+    weightGrams: 250.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: false,
+  },
+  {
+    id: 'gold-bar-argor-cast-500g',
+    name: '500 Gram Argor-Heraeus Cast Gold Bar (.9999)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 16.0754,
+    weightGrams: 500.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-argor-cast-1kg',
+    name: '1 kg Argor-Heraeus Cast Gold Bar (.9999)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 32.1507,
+    weightGrams: 1000.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-argor-cast-1oz',
+    name: '1 oz Argor-Heraeus Cast Gold Bar (.9999)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 1.0,
+    weightGrams: 31.1035,
+    purity: '.9999 Fine Gold',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'gold-bar-argor-kinebar-1oz',
+    name: '1 oz Argor-Heraeus Minted Kinebar Gold Bar (Holographic Assay)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 1.0,
+    weightGrams: 31.1035,
+    purity: '.9999 Fine Gold',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Minted',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+
   // --- SILVER FRACTIONAL & COINS ---
   {
     id: 'silver-coin-1-2oz',
@@ -751,6 +936,222 @@ export const SEED_PRODUCTS: Omit<Product, 'prices'>[] = [
     barType: 'Cast',
     imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
     popular: true,
+    availableRetailers: ['silverbullion'], // Silver Bullion Exclusive Vault Bar
+  },
+
+  // --- HERAEUS & ARGOR-HERAEUS SILVER CAST BARS ---
+  {
+    id: 'silver-bar-heraeus-cast-100g',
+    name: '100 Gram Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 3.21507,
+    weightGrams: 100.0,
+    purity: '.999 Fine Silver',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: false,
+  },
+  {
+    id: 'silver-bar-heraeus-cast-250g',
+    name: '250 Gram Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 8.03768,
+    weightGrams: 250.0,
+    purity: '.999 Fine Silver',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: false,
+  },
+  {
+    id: 'silver-bar-heraeus-cast-500g',
+    name: '500 Gram Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 16.0754,
+    weightGrams: 500.0,
+    purity: '.999 Fine Silver',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'silver-bar-heraeus-cast-1kg',
+    name: '1 kg Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 32.1507,
+    weightGrams: 1000.0,
+    purity: '.999 Fine Silver',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'silver-bar-heraeus-cast-100oz',
+    name: '100 oz Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 100.0,
+    weightGrams: 3110.35,
+    purity: '.999 Fine Silver',
+    mint: 'Heraeus Precious Metals (Germany)',
+    manufacturer: 'Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'silver-bar-argor-cast-100g',
+    name: '100 Gram Argor-Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 3.21507,
+    weightGrams: 100.0,
+    purity: '.999 Fine Silver',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: false,
+  },
+  {
+    id: 'silver-bar-argor-cast-250g',
+    name: '250 Gram Argor-Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 8.03768,
+    weightGrams: 250.0,
+    purity: '.999 Fine Silver',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: false,
+  },
+  {
+    id: 'silver-bar-argor-cast-500g',
+    name: '500 Gram Argor-Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 16.0754,
+    weightGrams: 500.0,
+    purity: '.999 Fine Silver',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'silver-bar-argor-cast-1kg',
+    name: '1 kg Argor-Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 32.1507,
+    weightGrams: 1000.0,
+    purity: '.999 Fine Silver',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  {
+    id: 'silver-bar-argor-cast-100oz',
+    name: '100 oz Argor-Heraeus Cast Silver Bar (.999 Fine)',
+    metal: 'Silver',
+    formFactor: 'Bar',
+    weightOz: 100.0,
+    weightGrams: 3110.35,
+    purity: '.999 Fine Silver',
+    mint: 'Argor-Heraeus SA (Switzerland)',
+    manufacturer: 'Argor-Heraeus',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+  },
+  // --- SINGLE RETAILER EXCLUSIVE ITEMS (Demonstrating Single-Retailer Availability) ---
+  {
+    id: 'gold-sovereign-charles',
+    name: 'King Charles III 2024 Gold Sovereign Coin',
+    metal: 'Gold',
+    formFactor: 'Coin',
+    weightOz: 0.2354,
+    weightGrams: 7.9881,
+    purity: '.9167 Fine Gold (22k)',
+    mint: 'The Royal Mint (UK)',
+    manufacturer: 'The Royal Mint',
+    isLbmaGoodDelivery: true,
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+    availableRetailers: ['silverbullion'], // Available ONLY from Silver Bullion
+  },
+  {
+    id: 'gold-bar-pamp-rosa-5g',
+    name: '5 g PAMP Suisse Rosa Gold Bar (In Assay Card)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 0.160754,
+    weightGrams: 5.0,
+    purity: '.9999 Fine Gold',
+    mint: 'PAMP Suisse',
+    manufacturer: 'PAMP Suisse',
+    isLbmaGoodDelivery: true,
+    barType: 'Minted',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+    availableRetailers: ['bullionstar'], // Available ONLY from BullionStar
+  },
+  {
+    id: 'silver-coin-tudor-2oz',
+    name: '2 oz Royal Mint Tudor Beasts Lion Gold & Silver Coin',
+    metal: 'Silver',
+    formFactor: 'Coin',
+    weightOz: 2.0,
+    weightGrams: 62.207,
+    purity: '.9999 Fine Silver',
+    mint: 'The Royal Mint',
+    manufacturer: 'The Royal Mint',
+    isLbmaGoodDelivery: true,
+    imageUrl: 'https://images.unsplash.com/photo-1605792657660-596af9009e82?auto=format&fit=crop&w=400&q=80',
+    popular: true,
+    availableRetailers: ['lpm'], // Available ONLY from LPM Metals
+  },
+  {
+    id: 'gold-nadir-100g',
+    name: '100 g Nadir Gold Cast Bar (.9999 Fine)',
+    metal: 'Gold',
+    formFactor: 'Bar',
+    weightOz: 3.21507,
+    weightGrams: 100.0,
+    purity: '.9999 Fine Gold',
+    mint: 'Nadir Metal Rafineri',
+    manufacturer: 'Nadir Gold',
+    isLbmaGoodDelivery: true,
+    barType: 'Cast',
+    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80',
+    popular: false,
+    availableRetailers: ['bullionstar', 'silverbullion'], // Available from 2 retailers
   },
 ];
 
@@ -1009,6 +1410,20 @@ export function generateProductsWithPrices(spotPrices: SpotPrices): Product[] {
     const offerCfg = SPECIAL_OFFERS_CONFIG[seed.id];
 
     const buildRetailerPrice = (rid: RetailerId) => {
+      // Check if item is available at this retailer
+      if (seed.availableRetailers && !seed.availableRetailers.includes(rid)) {
+        return {
+          retailerId: rid,
+          buyPriceSgd: 0,
+          retailShopPriceSgd: 0,
+          sellPriceSgd: 0,
+          buyPriceUsd: 0,
+          retailShopPriceUsd: 0,
+          sellPriceUsd: 0,
+          inStock: false,
+        };
+      }
+
       const regMarkup = markupInfo[rid].buyMarkup;
       const sellDiscount = markupInfo[rid].sellDiscount;
 
@@ -1112,32 +1527,34 @@ export function computeProductMetrics(
 
     retailerIds.forEach((rid) => {
       const p = product.prices[rid];
-      if (p.specialOffer) hasSpecialOffer = true;
-      const buyPriceSgd = p.buyPriceSgd;
-      const buyPriceUsd = p.buyPriceUsd;
-      const retailShopPriceSgd = p.retailShopPriceSgd || roundTwoDecimals(buyPriceSgd * 1.025);
-      const retailShopPriceUsd = p.retailShopPriceUsd || roundTwoDecimals(buyPriceUsd * 1.025);
-      const sellPriceSgd = p.sellPriceSgd;
-      const sellPriceUsd = p.sellPriceUsd;
+      if (p?.specialOffer) hasSpecialOffer = true;
+      const isAvailable = Boolean(p && p.inStock && p.buyPriceSgd > 0);
 
-      const premiumPct = ((buyPriceSgd - spotValueSgd) / spotValueSgd) * 100;
-      const retailShopPremiumPct = ((retailShopPriceSgd - spotValueSgd) / spotValueSgd) * 100;
-      const spreadValueSgd = buyPriceSgd - sellPriceSgd;
-      const spreadValueUsd = buyPriceUsd - sellPriceUsd;
-      const spreadPct = (spreadValueSgd / buyPriceSgd) * 100;
+      const buyPriceSgd = isAvailable ? p.buyPriceSgd : 0;
+      const buyPriceUsd = isAvailable ? p.buyPriceUsd : 0;
+      const retailShopPriceSgd = isAvailable ? (p.retailShopPriceSgd || roundTwoDecimals(buyPriceSgd * 1.025)) : 0;
+      const retailShopPriceUsd = isAvailable ? (p.retailShopPriceUsd || roundTwoDecimals(buyPriceUsd * 1.025)) : 0;
+      const sellPriceSgd = isAvailable ? p.sellPriceSgd : 0;
+      const sellPriceUsd = isAvailable ? p.sellPriceUsd : 0;
 
-      if (buyPriceSgd < lowestBuySgd) {
+      const premiumPct = isAvailable ? ((buyPriceSgd - spotValueSgd) / spotValueSgd) * 100 : 0;
+      const retailShopPremiumPct = isAvailable ? ((retailShopPriceSgd - spotValueSgd) / spotValueSgd) * 100 : 0;
+      const spreadValueSgd = isAvailable ? buyPriceSgd - sellPriceSgd : 0;
+      const spreadValueUsd = isAvailable ? buyPriceUsd - sellPriceUsd : 0;
+      const spreadPct = isAvailable && buyPriceSgd > 0 ? (spreadValueSgd / buyPriceSgd) * 100 : 0;
+
+      if (isAvailable && buyPriceSgd < lowestBuySgd) {
         lowestBuySgd = buyPriceSgd;
         bestBuyRetailer = rid;
       }
 
-      if (sellPriceSgd > highestSellSgd) {
+      if (isAvailable && sellPriceSgd > highestSellSgd) {
         highestSellSgd = sellPriceSgd;
         bestSellRetailer = rid;
       }
 
-      if (premiumPct < lowestPremium) lowestPremium = premiumPct;
-      if (spreadPct < lowestSpread) lowestSpread = spreadPct;
+      if (isAvailable && premiumPct < lowestPremium) lowestPremium = premiumPct;
+      if (isAvailable && spreadPct < lowestSpread) lowestSpread = spreadPct;
 
       retailerMetrics[rid] = {
         buyPriceSgd,
@@ -1154,16 +1571,23 @@ export function computeProductMetrics(
         isLowestBuyPrice: false,
         isLowestPremium: false,
         isLowestSpread: false,
+        inStock: isAvailable,
       };
     });
 
-    // Mark best indicators
+    // Mark best indicators among available retailers
     retailerIds.forEach((rid) => {
       const rm = retailerMetrics[rid];
-      if (Math.abs(rm.buyPriceSgd - lowestBuySgd) < 0.01) rm.isLowestBuyPrice = true;
-      if (Math.abs(rm.premiumPct - roundTwoDecimals(lowestPremium)) < 0.02) rm.isLowestPremium = true;
-      if (Math.abs(rm.spreadPct - roundTwoDecimals(lowestSpread)) < 0.02) rm.isLowestSpread = true;
+      if (rm.inStock) {
+        if (Math.abs(rm.buyPriceSgd - lowestBuySgd) < 0.01) rm.isLowestBuyPrice = true;
+        if (Math.abs(rm.premiumPct - roundTwoDecimals(lowestPremium)) < 0.02) rm.isLowestPremium = true;
+        if (Math.abs(rm.spreadPct - roundTwoDecimals(lowestSpread)) < 0.02) rm.isLowestSpread = true;
+      }
     });
+
+    if (lowestBuySgd === Infinity) lowestBuySgd = 0;
+    if (lowestPremium === Infinity) lowestPremium = 0;
+    if (lowestSpread === Infinity) lowestSpread = 0;
 
     return {
       product,

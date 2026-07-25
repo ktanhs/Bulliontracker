@@ -11,8 +11,9 @@ import {
   TriggeredAlertNotification,
   SpecialOffer,
   RetailerPrice,
+  RetailerApiStatus,
 } from './types';
-import { DEFAULT_SPOT_PRICES, generateProductsWithPrices, computeProductMetrics } from './data/bullionData';
+import { DEFAULT_SPOT_PRICES, generateProductsWithPrices, computeProductMetrics, RETAILERS } from './data/bullionData';
 import { fetchLivePrices, updateCustomSpotPrices } from './services/api';
 import { Header } from './components/Header';
 import { SpotPriceTicker } from './components/SpotPriceTicker';
@@ -31,6 +32,8 @@ import { PriceAlertsManagerModal } from './components/PriceAlertsManagerModal';
 import { PriceAlertToast } from './components/PriceAlertToast';
 import { ComparePremiumsView } from './components/ComparePremiumsView';
 import { MarketSentimentModal } from './components/MarketSentimentModal';
+import { RetailerApiStatusModal } from './components/RetailerApiStatusModal';
+
 
 export default function App() {
   const [spotPrices, setSpotPrices] = useState<SpotPrices>(DEFAULT_SPOT_PRICES);
@@ -70,7 +73,12 @@ export default function App() {
   // Market Sentiment pop-up modal
   const [isMarketSentimentOpen, setIsMarketSentimentOpen] = useState<boolean>(false);
 
+  // Retailer Website API status state & modal
+  const [apiStatuses, setApiStatuses] = useState<RetailerApiStatus[]>([]);
+  const [isApiStatusModalOpen, setIsApiStatusModalOpen] = useState<boolean>(false);
+
   // Selected special offer deal modal
+
   const [selectedSpecialOffer, setSelectedSpecialOffer] = useState<{
     product: Product;
     retailerId: RetailerId;
@@ -142,6 +150,9 @@ export default function App() {
       const data = await fetchLivePrices(isManualRefresh);
       setSpotPrices(data.spotPrices);
       setRawProducts(data.products);
+      if (data.retailerApiStatus) {
+        setApiStatuses(data.retailerApiStatus);
+      }
     } catch (e) {
       // Fallback generator
       const fallbackProds = generateProductsWithPrices(DEFAULT_SPOT_PRICES);
@@ -286,6 +297,19 @@ export default function App() {
     }
   };
 
+  // Search text normalizer for forgiving search (handles common spellings like heraus -> heraeus)
+  const normalizeSearchText = (str: string): string => {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .replace(/heraus/g, 'heraeus')
+      .replace(/herause/g, 'heraeus')
+      .replace(/heraous/g, 'heraeus')
+      .replace(/[\-\_]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   // Apply search & filters
   const filteredProducts = useMemo(() => {
     return allComputedProducts
@@ -309,7 +333,16 @@ export default function App() {
 
         // Manufacturer filter
         if (filter.manufacturer && filter.manufacturer !== 'ALL') {
-          const matchMfg = p.manufacturer === filter.manufacturer || p.mint.toLowerCase().includes(filter.manufacturer.toLowerCase());
+          const normFilterMfg = normalizeSearchText(filter.manufacturer);
+          const normMfg = normalizeSearchText(p.manufacturer || '');
+          const normMint = normalizeSearchText(p.mint);
+          const normName = normalizeSearchText(p.name);
+
+          const matchMfg =
+            normMfg.includes(normFilterMfg) ||
+            normMint.includes(normFilterMfg) ||
+            normName.includes(normFilterMfg);
+
           if (!matchMfg) return false;
         }
 
@@ -331,12 +364,25 @@ export default function App() {
         if (filter.weightRange === '1kg' && Math.abs(p.weightOz - 32.1507) > 1.0) return false;
         if (filter.weightRange === 'heavy' && p.weightOz < 90.0) return false;
 
-        // Name filter (search specifically by product name or mint)
+        // Name filter (search specifically by product name, manufacturer, mint, or bar type)
         if (filter.nameQuery && filter.nameQuery.trim() !== '') {
-          const nq = filter.nameQuery.toLowerCase().trim();
-          const matchName = p.name.toLowerCase().includes(nq);
-          const matchMint = p.mint.toLowerCase().includes(nq);
-          if (!matchName && !matchMint) return false;
+          const normQ = normalizeSearchText(filter.nameQuery);
+          const normName = normalizeSearchText(p.name);
+          const normMint = normalizeSearchText(p.mint);
+          const normMfg = normalizeSearchText(p.manufacturer || '');
+          const tokens = normQ.split(' ').filter(Boolean);
+
+          const matchTokens = tokens.every((token) => {
+            return (
+              normName.includes(token) ||
+              normMint.includes(token) ||
+              normMfg.includes(token) ||
+              (token === 'cast' && (p.barType === 'Cast' || normName.includes('cast'))) ||
+              (token === 'minted' && (p.barType === 'Minted' || normName.includes('minted')))
+            );
+          });
+
+          if (!matchTokens) return false;
         }
 
         // Weight search filter (search specifically by weight string or numeric oz/g)
@@ -364,20 +410,48 @@ export default function App() {
 
         // General search query across product attributes, manufacturer & dealers
         if (filter.searchQuery && filter.searchQuery.trim() !== '') {
-          const q = filter.searchQuery.toLowerCase().trim();
-          const matchName = p.name.toLowerCase().includes(q);
-          const matchMint = p.mint.toLowerCase().includes(q);
-          const matchMfg = p.manufacturer ? p.manufacturer.toLowerCase().includes(q) : false;
-          const matchMetal = p.metal.toLowerCase().includes(q);
-          const matchPurity = p.purity.toLowerCase().includes(q);
-          const matchForm = p.formFactor.toLowerCase().includes(q);
-          const matchOz = `${p.weightOz}oz`.includes(q) || `${p.weightOz} oz`.includes(q);
-          const matchGram = `${p.weightGrams}g`.includes(q) || `${p.weightGrams} g`.includes(q);
-          const matchLbma = (q.includes('lbma') || q.includes('delivery')) && p.isLbmaGoodDelivery;
-          
-          if (!matchName && !matchMint && !matchMfg && !matchMetal && !matchPurity && !matchForm && !matchOz && !matchGram && !matchLbma) {
-            return false;
-          }
+          const normQ = normalizeSearchText(filter.searchQuery);
+          const normName = normalizeSearchText(p.name);
+          const normMint = normalizeSearchText(p.mint);
+          const normMfg = normalizeSearchText(p.manufacturer || '');
+          const normPurity = normalizeSearchText(p.purity);
+          const normForm = normalizeSearchText(p.formFactor);
+          const normBarType = p.barType ? normalizeSearchText(p.barType) : '';
+          const weightOzStr = `${p.weightOz}oz ${p.weightOz} oz`;
+          const weightGramStr = `${p.weightGrams}g ${p.weightGrams} g`;
+
+          const tokens = normQ.split(' ').filter(Boolean);
+
+          const matchTokens = tokens.every((token) => {
+            if (token === 'cast' || token === 'poured') return p.barType === 'Cast' || normName.includes('cast') || normName.includes('poured');
+            if (token === 'minted' || token === 'pressed' || token === 'kinebar') return p.barType === 'Minted' || normName.includes('minted') || normName.includes('kinebar');
+            if (token === 'gold') return p.metal === 'Gold';
+            if (token === 'silver') return p.metal === 'Silver';
+            if (token === 'bar' || token === 'bars') return p.formFactor === 'Bar';
+            if (token === 'coin' || token === 'coins') return p.formFactor === 'Coin';
+            if (token === 'lbma') return p.isLbmaGoodDelivery;
+
+            const matchRetailer = (['silverbullion', 'bullionstar', 'lpm'] as RetailerId[]).some((rid) => {
+              const ret = RETAILERS[rid];
+              const isStocked = item.retailerMetrics[rid]?.inStock && item.retailerMetrics[rid]?.buyPriceSgd > 0;
+              if (!isStocked) return false;
+              return ret.name.toLowerCase().includes(token) || ret.shortName.toLowerCase().includes(token) || ret.id.toLowerCase().includes(token);
+            });
+
+            return (
+              normName.includes(token) ||
+              normMint.includes(token) ||
+              normMfg.includes(token) ||
+              normPurity.includes(token) ||
+              normForm.includes(token) ||
+              normBarType.includes(token) ||
+              weightOzStr.includes(token) ||
+              weightGramStr.includes(token) ||
+              matchRetailer
+            );
+          });
+
+          if (!matchTokens) return false;
         }
 
         return true;
@@ -392,8 +466,13 @@ export default function App() {
         if (filter.sortBy === 'lowestBuyPrice') {
           return a.retailerMetrics[a.bestBuyRetailerId].buyPriceSgd - b.retailerMetrics[b.bestBuyRetailerId].buyPriceSgd;
         }
-        if (filter.sortBy === 'weight') {
-          return b.product.weightOz - a.product.weightOz;
+        if (filter.sortBy === 'weight' || filter.sortBy === 'weightDesc') {
+          return filter.sortOrder === 'asc'
+            ? a.product.weightOz - b.product.weightOz
+            : b.product.weightOz - a.product.weightOz;
+        }
+        if (filter.sortBy === 'weightAsc') {
+          return a.product.weightOz - b.product.weightOz;
         }
         if (filter.sortBy === 'name') {
           return a.product.name.localeCompare(b.product.name);
@@ -430,7 +509,11 @@ export default function App() {
         triggeredCount={triggeredNotifications.length}
         onOpenAlertsManager={() => setIsAlertsManagerOpen(true)}
         onOpenMarketSentiments={() => setIsMarketSentimentOpen(true)}
+        onOpenApiStatusModal={() => setIsApiStatusModalOpen(true)}
+        apiStatuses={apiStatuses}
+        spotPrices={spotPrices}
       />
+
 
       {/* Spot Price Ticker Bar */}
       <SpotPriceTicker
@@ -465,12 +548,15 @@ export default function App() {
               <ProductComparisonTable
                 computedProducts={filteredProducts}
                 currency={currency}
+                spotPrices={spotPrices}
                 onAddToCart={handleAddToCart}
                 onSelectProduct={(p) => setSelectedProduct(p)}
                 onSelectSpecialOffer={handleSelectSpecialOffer}
                 onSetPriceAlert={(p) => setCreateAlertProduct(p)}
                 onComparePremiums={(p) => setCompareModalProduct(p)}
+                onSortByWeight={(dir) => setFilter((prev) => ({ ...prev, sortBy: dir === 'asc' ? 'weightAsc' : 'weightDesc' }))}
                 activeAlertProductIds={activeAlertProductIds}
+                isMarketClosed={spotPrices.marketStatus === 'CLOSED' || spotPrices.isLive === false}
               />
             ) : (
               <ProductCardGrid
@@ -482,6 +568,7 @@ export default function App() {
                 onSetPriceAlert={(p) => setCreateAlertProduct(p)}
                 onComparePremiums={(p) => setCompareModalProduct(p)}
                 activeAlertProductIds={activeAlertProductIds}
+                isMarketClosed={spotPrices.marketStatus === 'CLOSED' || spotPrices.isLive === false}
               />
             )}
           </div>
@@ -492,9 +579,11 @@ export default function App() {
           <ComparePremiumsView
             computedProducts={allComputedProducts}
             currency={currency}
+            spotPrices={spotPrices}
             onAddToCart={handleAddToCart}
             onSetPriceAlert={(p) => setCreateAlertProduct(p)}
             initialProductId={selectedCompareProductId}
+            isMarketClosed={spotPrices.marketStatus === 'CLOSED' || spotPrices.isLive === false}
           />
         )}
 
@@ -503,6 +592,7 @@ export default function App() {
           <PriceCalculator
             computedProducts={allComputedProducts}
             currency={currency}
+            spotPrices={spotPrices}
             cartItems={cartItems}
             setCartItems={setCartItems}
           />
@@ -514,7 +604,13 @@ export default function App() {
         )}
 
         {/* Tab 5: Retailer Profiles & Singapore GST Guide */}
-        {activeTab === 'retailers' && <RetailerInfoSection />}
+        {activeTab === 'retailers' && (
+          <RetailerInfoSection
+            apiStatuses={apiStatuses}
+            onOpenApiStatusModal={() => setIsApiStatusModalOpen(true)}
+          />
+        )}
+
 
         {/* Tab 6: Gemini AI Market Analyst */}
         {activeTab === 'insights' && <GeminiMarketInsights spotPrices={spotPrices} />}
@@ -524,6 +620,7 @@ export default function App() {
       <ProductDetailModal
         productMetrics={selectedProduct}
         currency={currency}
+        spotPrices={spotPrices}
         onClose={() => setSelectedProduct(null)}
         onAddToCart={handleAddToCart}
         onSelectSpecialOffer={handleSelectSpecialOffer}
@@ -542,6 +639,7 @@ export default function App() {
             <ComparePremiumsView
               computedProducts={allComputedProducts}
               currency={currency}
+              spotPrices={spotPrices}
               onAddToCart={handleAddToCart}
               onSetPriceAlert={(p) => setCreateAlertProduct(p)}
               onCloseModal={() => setCompareModalProduct(null)}
@@ -567,6 +665,7 @@ export default function App() {
         <SetPriceAlertModal
           productMetrics={createAlertProduct}
           currency={currency}
+          spotPrices={spotPrices}
           onClose={() => setCreateAlertProduct(null)}
           onSaveAlert={handleSaveAlert}
         />
@@ -578,6 +677,7 @@ export default function App() {
           alerts={priceAlerts}
           computedProducts={allComputedProducts}
           currency={currency}
+          spotPrices={spotPrices}
           onClose={() => setIsAlertsManagerOpen(null)}
           onToggleAlert={handleToggleAlert}
           onDeleteAlert={handleDeleteAlert}
@@ -601,6 +701,18 @@ export default function App() {
           onClose={() => setIsMarketSentimentOpen(false)}
         />
       )}
+
+      {/* Retailer Website API Status Integration Modal */}
+      {isApiStatusModalOpen && (
+        <RetailerApiStatusModal
+          apiStatuses={apiStatuses}
+          spotPrices={spotPrices}
+          onClose={() => setIsApiStatusModalOpen(false)}
+          onRefresh={() => loadPrices(true)}
+          isRefreshing={isRefreshing}
+        />
+      )}
+
 
       {/* Triggered Price Alert Toast Notifications */}
       <PriceAlertToast

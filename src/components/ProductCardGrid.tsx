@@ -1,7 +1,7 @@
 import React from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { Trophy, PlusCircle, Flame, Tag, Clock, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ExternalLink, ShoppingCart } from 'lucide-react';
+import { Trophy, PlusCircle, Flame, Tag, Clock, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ExternalLink, ShoppingCart, PauseCircle } from 'lucide-react';
 import { openRetailerListing } from '../utils/urlUtils';
 
 interface ProductCardGridProps {
@@ -13,6 +13,7 @@ interface ProductCardGridProps {
   onSetPriceAlert?: (product: ComputedProductMetrics) => void;
   onComparePremiums?: (product: ComputedProductMetrics) => void;
   activeAlertProductIds?: Set<string>;
+  isMarketClosed?: boolean;
 }
 
 export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
@@ -24,6 +25,7 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
   onSetPriceAlert,
   onComparePremiums,
   activeAlertProductIds,
+  isMarketClosed = false,
 }) => {
   const retailerKeys: RetailerId[] = ['silverbullion', 'bullionstar', 'lpm'];
 
@@ -92,6 +94,12 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                     >
                       {product.metal} {product.formFactor}
                     </span>
+                    {isMarketClosed && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                        <PauseCircle className="w-2.5 h-2.5 text-rose-400" />
+                        Close Price
+                      </span>
+                    )}
                     <span className="text-xs text-slate-400 font-mono">
                       {product.weightOz} oz ({product.weightGrams}g)
                     </span>
@@ -115,6 +123,16 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                       </span>
                     )}
                   </div>
+                  {/* Single Retailer Exclusive Badge */}
+                  {product.availableRetailers && product.availableRetailers.length === 1 && (
+                    <div className="mb-1">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-950/90 text-indigo-300 border border-indigo-500/40 inline-flex items-center gap-1">
+                        <Store className="w-2.5 h-2.5 text-indigo-400" />
+                        {RETAILERS[product.availableRetailers[0]]?.shortName || 'Single Retailer'} Exclusive
+                      </span>
+                    </div>
+                  )}
+
                   <h3 className="font-bold text-slate-100 group-hover:text-amber-300 transition-colors text-base line-clamp-2">
                     {product.name}
                   </h3>
@@ -138,8 +156,19 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                 {retailerKeys.map((rid) => {
                   const ret = RETAILERS[rid];
                   const metrics = retailerMetrics[rid];
-                  const offer = product.prices[rid].specialOffer;
+                  const offer = product.prices[rid]?.specialOffer;
                   const isBest = rid === bestBuyRetailerId;
+
+                  if (!metrics?.inStock || metrics.buyPriceSgd <= 0) {
+                    return (
+                      <div key={rid} className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs font-mono text-slate-500">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${ret.badgeBg}`}>
+                          {ret.shortName}
+                        </span>
+                        <span>Not Offered / Out of Stock</span>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div

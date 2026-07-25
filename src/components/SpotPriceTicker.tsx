@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Currency, SpotPrices } from '../types';
-import { TrendingUp, TrendingDown, Coins, ShieldCheck, Scale, ArrowRightLeft, Edit3, Check, X, RefreshCw, Radio } from 'lucide-react';
+import { TrendingUp, TrendingDown, Coins, ShieldCheck, Scale, ArrowRightLeft, Edit3, Check, X, RefreshCw, Radio, PauseCircle, Clock, Lock, AlertCircle } from 'lucide-react';
 
 interface SpotPriceTickerProps {
   spotPrices: SpotPrices;
@@ -28,12 +28,16 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
     source,
     isLive,
     lastUpdated,
+    marketStatus,
+    lastMarketCloseTime,
   } = spotPrices;
 
   const [isEditing, setIsEditing] = useState(false);
   const [editGold, setEditGold] = useState<string>(goldUsdPerOz.toString());
   const [editSilver, setEditSilver] = useState<string>(silverUsdPerOz.toString());
   const [editFx, setEditFx] = useState<string>(usdToSgdRate.toString());
+
+  const isMarketClosed = marketStatus === 'CLOSED' || isLive === false;
 
   // Weight multipliers relative to troy oz
   const unitMultiplier =
@@ -73,11 +77,26 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
     }
   };
 
-  const formattedTime = new Date(lastUpdated).toLocaleTimeString('en-US', {
+  const formattedDateTime = new Date(lastUpdated).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   });
+
+  const formattedMarketCloseDateTime = lastMarketCloseTime
+    ? new Date(lastMarketCloseTime).toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : formattedDateTime;
 
   return (
     <div className="bg-slate-900/80 border-b border-slate-800 py-3.5 px-4 sm:px-6 lg:px-8">
@@ -86,19 +105,30 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800">
           <div className="flex items-center space-x-2">
             <span className="relative flex h-2 w-2">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isLive !== false ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${isLive !== false ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${!isMarketClosed ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${!isMarketClosed ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
             </span>
             <span className="font-semibold text-slate-200 flex items-center gap-1">
-              <Radio className="w-3.5 h-3.5 text-emerald-400" />
-              {isLive !== false ? 'LIVE MARKET FEED' : 'CUSTOM OVERRIDE SPOT'}
+              {!isMarketClosed ? (
+                <>
+                  <Radio className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>LIVE TRADING MARKET FEED</span>
+                </>
+              ) : (
+                <>
+                  <PauseCircle className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="text-rose-300 font-bold">MARKET CLOSED • LAST LISTED PRICE</span>
+                </>
+              )}
             </span>
             <span className="text-slate-500 hidden sm:inline">•</span>
-            <span className="text-slate-400 hidden sm:inline">{source || 'Real-time Bullion API'}</span>
+            <span className="text-slate-400 hidden sm:inline">{source || (isMarketClosed ? 'Market Close Settlement Quotes' : 'Real-time Bullion API')}</span>
           </div>
 
           <div className="flex items-center space-x-3">
-            <span className="text-slate-400 font-mono text-[11px]">Updated {formattedTime}</span>
+            <span className="text-slate-400 font-mono text-[11px]">
+              {isMarketClosed ? `Last Spot Updated ${formattedDateTime}` : `Updated ${formattedDateTime}`}
+            </span>
             <button
               id="edit-custom-spot-btn"
               onClick={() => {
@@ -114,6 +144,38 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Market Closed Banner Notice */}
+        {isMarketClosed && (
+          <div className="bg-gradient-to-r from-rose-950/80 via-slate-900 to-rose-950/80 border border-rose-500/40 p-3.5 rounded-xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs animate-in fade-in duration-300">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/40 flex-shrink-0 mt-0.5">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center space-x-2">
+                  <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded font-extrabold text-[10px] uppercase tracking-wider">
+                    Market Closed
+                  </span>
+                  <strong className="text-white text-xs font-bold">
+                    Last Listed Spot Price at Market Close
+                  </strong>
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Precious metals market is currently closed for the weekend / session. Prices below reflect final settlement spot quotes recorded at market close. Dealer buy & sell prices remain valid based on these last listed closing rates.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 bg-slate-950/80 p-2 rounded-lg border border-slate-800 self-start md:self-auto flex-shrink-0">
+              <Clock className="w-4 h-4 text-amber-400" />
+              <div className="text-[11px] font-mono">
+                <span className="text-slate-400 block text-[10px]">Market Close Timestamp:</span>
+                <span className="text-amber-300 font-semibold">{formattedMarketCloseDateTime}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Custom Edit Drawer */}
         {isEditing && (

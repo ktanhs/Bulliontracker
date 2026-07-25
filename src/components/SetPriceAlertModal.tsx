@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Product, ComputedProductMetrics, RetailerId, PriceAlert, Currency } from '../types';
+import { Product, ComputedProductMetrics, RetailerId, PriceAlert, Currency, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { X, BellRing, ArrowDown, ArrowUp, DollarSign, Percent, ShieldCheck, Check, Sparkles } from 'lucide-react';
+import { X, BellRing, ArrowDown, ArrowUp, DollarSign, Percent, ShieldCheck, Check, Sparkles, Radio } from 'lucide-react';
 
 interface SetPriceAlertModalProps {
   productMetrics: ComputedProductMetrics | null;
   currency: Currency;
+  spotPrices?: SpotPrices;
   onClose: () => void;
   onSaveAlert: (alert: Omit<PriceAlert, 'id' | 'createdAt' | 'triggeredCount'>) => void;
 }
@@ -13,6 +14,7 @@ interface SetPriceAlertModalProps {
 export const SetPriceAlertModal: React.FC<SetPriceAlertModalProps> = ({
   productMetrics,
   currency,
+  spotPrices,
   onClose,
   onSaveAlert,
 }) => {
@@ -119,6 +121,26 @@ export const SetPriceAlertModal: React.FC<SetPriceAlertModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Live Spot Price Benchmark Bar */}
+        {spotPrices && (
+          <div className="bg-slate-950 px-5 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
+            <div className="flex items-center space-x-2">
+              <Radio className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-slate-400">Current Spot:</span>
+              <strong className="text-amber-300 font-mono">
+                ${spotPrices.goldUsdPerOz.toFixed(2)} Gold
+              </strong>
+              <span className="text-slate-600">|</span>
+              <strong className="text-slate-200 font-mono">
+                ${spotPrices.silverUsdPerOz.toFixed(2)} Silver
+              </strong>
+            </div>
+            <span className="text-slate-400 font-mono text-[11px]">
+              1 USD = {spotPrices.usdToSgdRate.toFixed(4)} SGD
+            </span>
+          </div>
+        )}
 
         {/* Content Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">

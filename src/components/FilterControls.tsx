@@ -157,22 +157,52 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
             ))}
           </div>
 
-          {/* Form Factor Filter */}
-          <div className="flex bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 text-xs font-medium">
-            {(['ALL', 'Coin', 'Bar'] as const).map((f) => (
-              <button
-                key={f}
-                id={`filter-form-${f.toLowerCase()}`}
-                onClick={() => setFilter((prev) => ({ ...prev, formFactor: f }))}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  filter.formFactor === f
-                    ? 'bg-slate-700 text-amber-300 font-bold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {f === 'ALL' ? 'All Forms' : f === 'Coin' ? 'Coins' : 'Bars'}
-              </button>
-            ))}
+          {/* Form Factor & Bar Type Filter Tabs */}
+          <div className="flex bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 text-xs font-medium flex-wrap gap-0.5">
+            <button
+              id="filter-form-all"
+              onClick={() => setFilter((prev) => ({ ...prev, formFactor: 'ALL', barType: 'ALL' }))}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                filter.formFactor === 'ALL' && (filter.barType === 'ALL' || !filter.barType)
+                  ? 'bg-slate-700 text-amber-300 font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              All Items
+            </button>
+            <button
+              id="filter-form-coin"
+              onClick={() => setFilter((prev) => ({ ...prev, formFactor: 'Coin', barType: 'ALL' }))}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                filter.formFactor === 'Coin'
+                  ? 'bg-slate-700 text-amber-300 font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Coins
+            </button>
+            <button
+              id="filter-form-cast-bar"
+              onClick={() => setFilter((prev) => ({ ...prev, formFactor: 'Bar', barType: 'Cast' }))}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
+                filter.formFactor === 'Bar' && filter.barType === 'Cast'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold shadow-sm ring-1 ring-amber-500/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span className="text-amber-400">🧱</span> Cast Bars
+            </button>
+            <button
+              id="filter-form-minted-bar"
+              onClick={() => setFilter((prev) => ({ ...prev, formFactor: 'Bar', barType: 'Minted' }))}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
+                filter.formFactor === 'Bar' && filter.barType === 'Minted'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold shadow-sm ring-1 ring-cyan-500/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span className="text-cyan-400">🪙</span> Minted Bars
+            </button>
           </div>
 
           {/* Weight Range Pills */}
@@ -301,10 +331,11 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
               onChange={(e) => setFilter((prev) => ({ ...prev, sortBy: e.target.value as any }))}
               className="bg-transparent text-slate-100 font-medium focus:outline-none cursor-pointer"
             >
+              <option value="weightDesc" className="bg-slate-800 text-amber-300 font-bold">Weight (Heavy to Light ⚖️)</option>
+              <option value="weightAsc" className="bg-slate-800 text-amber-300 font-bold">Weight (Light to Heavy ⚖️)</option>
               <option value="lowestPremium" className="bg-slate-800 text-white">Lowest Premium %</option>
               <option value="lowestSpread" className="bg-slate-800 text-white">Lowest Buy-Sell Spread</option>
               <option value="lowestBuyPrice" className="bg-slate-800 text-white">Lowest Buy Price</option>
-              <option value="weight" className="bg-slate-800 text-white">Weight (Heavy to Light)</option>
               <option value="name" className="bg-slate-800 text-white">Product Name (A-Z)</option>
             </select>
           </div>

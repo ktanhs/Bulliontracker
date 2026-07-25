@@ -433,24 +433,32 @@ export const MarketSentimentModal: React.FC<MarketSentimentModalProps> = ({
         </div>
 
         {/* Live Market Pulse Indicator Banner */}
-        <div className="px-5 py-2 bg-slate-950 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex items-center space-x-2">
+        <div className="px-5 py-2.5 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
             <span className="font-bold text-emerald-400 uppercase tracking-wide text-[11px]">
-              Live Market Feed Active
+              Market Feed
             </span>
-            <span className="text-slate-500">|</span>
-            <span className="text-slate-300 font-mono text-[11px]">
+            <span className="text-slate-600">|</span>
+            <span className="text-amber-300 font-mono text-[11px] font-semibold">
+              Gold: ${spotPrices.goldUsdPerOz.toFixed(2)}/oz (S${(spotPrices.goldUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-200 font-mono text-[11px] font-semibold">
+              Silver: ${spotPrices.silverUsdPerOz.toFixed(2)}/oz (S${(spotPrices.silverUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-400 font-mono text-[11px]">
               1 USD = {spotPrices.usdToSgdRate.toFixed(4)} SGD
             </span>
           </div>
 
           <div className="text-[11px] text-slate-400 flex items-center gap-1.5 font-mono">
             <Radio className="w-3 h-3 text-amber-400" />
-            <span>Updated: {new Date(spotPrices.lastUpdated).toLocaleTimeString()}</span>
+            <span>Updated: {new Date(spotPrices.lastUpdated).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
           </div>
         </div>
 

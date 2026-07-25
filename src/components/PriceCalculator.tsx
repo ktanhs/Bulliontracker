@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ComputedProductMetrics, Currency, PortfolioCalculatorItem, RetailerId } from '../types';
+import { ComputedProductMetrics, Currency, PortfolioCalculatorItem, RetailerId, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { Calculator, Plus, Trash2, PiggyBank, ArrowRight, ShieldCheck, Check } from 'lucide-react';
+import { Calculator, Plus, Trash2, PiggyBank, ArrowRight, ShieldCheck, Check, Radio } from 'lucide-react';
 
 interface PriceCalculatorProps {
   computedProducts: ComputedProductMetrics[];
   currency: Currency;
+  spotPrices?: SpotPrices;
   cartItems: PortfolioCalculatorItem[];
   setCartItems: React.Dispatch<React.SetStateAction<PortfolioCalculatorItem[]>>;
 }
@@ -13,6 +14,7 @@ interface PriceCalculatorProps {
 export const PriceCalculator: React.FC<PriceCalculatorProps> = ({
   computedProducts,
   currency,
+  spotPrices,
   cartItems,
   setCartItems,
 }) => {
@@ -136,6 +138,26 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Spot Price Benchmark Bar */}
+        {spotPrices && (
+          <div className="mt-3 bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+            <div className="flex items-center space-x-2">
+              <Radio className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-slate-400">Calculator Benchmark Spot:</span>
+              <strong className="text-amber-300">
+                Gold ${spotPrices.goldUsdPerOz.toFixed(2)}/oz
+              </strong>
+              <span className="text-slate-600">•</span>
+              <strong className="text-slate-200">
+                Silver ${spotPrices.silverUsdPerOz.toFixed(2)}/oz
+              </strong>
+            </div>
+            <span className="text-slate-400 text-[11px]">
+              1 USD = {spotPrices.usdToSgdRate.toFixed(4)} SGD
+            </span>
+          </div>
+        )}
 
         {/* Add Item Controls */}
         <div className="mt-5 p-4 bg-slate-800/80 border border-slate-700/80 rounded-xl flex flex-col sm:flex-row items-center gap-3">

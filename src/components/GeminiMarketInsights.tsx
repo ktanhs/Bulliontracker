@@ -11,12 +11,14 @@ export const GeminiMarketInsights: React.FC<GeminiMarketInsightsProps> = ({ spot
   const [analysisText, setAnalysisText] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [userQuery, setUserQuery] = useState<string>('');
+  const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string>('');
 
   const loadInitialInsight = async () => {
     setIsLoading(true);
     try {
       const res = await fetchMarketInsights({});
       setAnalysisText(res);
+      setLastAnalyzedAt(new Date().toISOString());
     } catch (e) {
       setAnalysisText('Unable to retrieve market analysis.');
     } finally {
@@ -35,6 +37,7 @@ export const GeminiMarketInsights: React.FC<GeminiMarketInsightsProps> = ({ spot
     try {
       const res = await fetchMarketInsights({ userQuery: q });
       setAnalysisText(res);
+      setLastAnalyzedAt(new Date().toISOString());
     } catch (e) {
       setAnalysisText('Error generating answer.');
     } finally {
@@ -135,8 +138,15 @@ export const GeminiMarketInsights: React.FC<GeminiMarketInsightsProps> = ({ spot
             <span className="text-sm font-medium">Gemini AI analyzing live market spot prices & dealer quotes...</span>
           </div>
         ) : (
-          <div className="prose prose-invert prose-slate max-w-none text-slate-200 text-sm leading-relaxed space-y-3 whitespace-pre-wrap">
-            {analysisText}
+          <div className="space-y-4">
+            {lastAnalyzedAt && (
+              <div className="text-[11px] text-amber-300 font-mono bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg inline-block">
+                ⚡ Analysis Date & Time: {new Date(lastAnalyzedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </div>
+            )}
+            <div className="prose prose-invert prose-slate max-w-none text-slate-200 text-sm leading-relaxed space-y-3 whitespace-pre-wrap">
+              {analysisText}
+            </div>
           </div>
         )}
       </div>

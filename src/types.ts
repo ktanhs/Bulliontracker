@@ -11,6 +11,8 @@ export interface SpotPrices {
   lastUpdated: string;
   source?: string;
   isLive?: boolean;
+  marketStatus?: 'OPEN' | 'CLOSED';
+  lastMarketCloseTime?: string;
 }
 
 export type RetailerId = 'silverbullion' | 'bullionstar' | 'lpm';
@@ -88,6 +90,7 @@ export interface Product {
   barType?: 'Cast' | 'Minted'; // 'Cast' (poured) vs 'Minted' (pressed/assay) for bar form factor
   imageUrl: string;
   popular?: boolean;
+  availableRetailers?: RetailerId[]; // Retailers that stock/sell this item (supports items available from only 1 retailer)
   prices: Record<RetailerId, RetailerPrice>;
 }
 
@@ -130,7 +133,7 @@ export interface ProductFilter {
   weightQuery: string;
   specialOffersOnly?: boolean;
   bulkDealsOnly?: boolean;
-  sortBy: 'lowestBuyPrice' | 'lowestPremium' | 'lowestSpread' | 'name' | 'weight';
+  sortBy: 'lowestBuyPrice' | 'lowestPremium' | 'lowestSpread' | 'name' | 'weight' | 'weightAsc' | 'weightDesc';
   sortOrder: 'asc' | 'desc';
 }
 
@@ -178,4 +181,18 @@ export interface HistoricalPricePoint {
   sbSilverPremiumPct: number;
   bsSilverPremiumPct: number;
   lpmSilverPremiumPct: number;
+}
+
+export interface RetailerApiStatus {
+  id: RetailerId;
+  name: string;
+  shortName: string;
+  status: 'ONLINE' | 'DEGRADED' | 'OFFLINE';
+  latencyMs: number;
+  endpointUrl: string;
+  lastSynced: string;
+  directPriceFeed: boolean;
+  activeFeeds: string[];
+  syncFrequencySec: number;
+  ipmGstVerified: boolean;
 }

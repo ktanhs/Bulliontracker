@@ -1,6 +1,10 @@
-import { Product, SpotPrices } from '../types';
+import { Product, SpotPrices, RetailerApiStatus } from '../types';
 
-export async function fetchLivePrices(refresh: boolean = false): Promise<{ spotPrices: SpotPrices; products: Product[] }> {
+export async function fetchLivePrices(refresh: boolean = false): Promise<{
+  spotPrices: SpotPrices;
+  products: Product[];
+  retailerApiStatus?: RetailerApiStatus[];
+}> {
   try {
     const response = await fetch(`/api/prices${refresh ? '?refresh=true' : ''}`);
     if (!response.ok) {
@@ -9,8 +13,21 @@ export async function fetchLivePrices(refresh: boolean = false): Promise<{ spotP
     return await response.json();
   } catch (err) {
     console.warn('Backend API error, falling back to client calculations:', err);
-    // Fallback logic handled gracefully by caller if needed
     throw err;
+  }
+}
+
+export async function fetchRetailerApiStatus(): Promise<RetailerApiStatus[]> {
+  try {
+    const response = await fetch('/api/retailer-status');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch retailer API status: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.retailerApiStatus || [];
+  } catch (err) {
+    console.warn('Error fetching retailer API status:', err);
+    return [];
   }
 }
 

@@ -1,34 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer } from '../types';
+import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
 import { PremiumSparkline } from './PremiumSparkline';
-import { Trophy, ShoppingBag, ArrowUpRight, PlusCircle, Flame, Clock, ExternalLink, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ShoppingCart, TrendingUp, TrendingDown, Zap, Activity } from 'lucide-react';
+import { Trophy, ShoppingBag, ArrowUpRight, PlusCircle, Flame, Clock, ExternalLink, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ShoppingCart, TrendingUp, TrendingDown, Zap, Activity, PauseCircle, Radio, ArrowUpDown } from 'lucide-react';
 import { getRetailerListingUrl, openRetailerListing } from '../utils/urlUtils';
 
 interface ProductComparisonTableProps {
   computedProducts: ComputedProductMetrics[];
   currency: Currency;
+  spotPrices?: SpotPrices;
   onAddToCart?: (productId: string, retailerId: RetailerId) => void;
   onSelectProduct?: (product: ComputedProductMetrics) => void;
   onSelectSpecialOffer?: (product: Product, retailerId: RetailerId, offer: SpecialOffer) => void;
   onSetPriceAlert?: (product: ComputedProductMetrics) => void;
   onComparePremiums?: (product: ComputedProductMetrics) => void;
+  onSortByWeight?: (direction: 'desc' | 'asc') => void;
   activeAlertProductIds?: Set<string>;
+  isMarketClosed?: boolean;
 }
 
 export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
   computedProducts,
   currency,
+  spotPrices,
   onAddToCart,
   onSelectProduct,
   onSelectSpecialOffer,
   onSetPriceAlert,
   onComparePremiums,
+  onSortByWeight,
   activeAlertProductIds,
+  isMarketClosed = false,
 }) => {
   const retailerKeys: RetailerId[] = ['silverbullion', 'bullionstar', 'lpm'];
 
   // State to track row flash animation on price refreshes ('up' | 'down')
+  const [groupByBarType, setGroupByBarType] = useState<boolean>(true);
   const [rowFlashes, setRowFlashes] = useState<Record<string, 'up' | 'down'>>({});
   const prevPricesRef = useRef<Record<string, number>>({});
 
@@ -121,12 +128,102 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl" id="comparison-matrix-wrapper">
+      {/* Top Spot Price at Market Closure Benchmark & Tabulation Bar */}
+      {spotPrices && (
+        <div className="bg-slate-950 px-5 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center space-x-2">
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isMarketClosed ? 'bg-rose-400' : 'bg-emerald-400'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isMarketClosed ? 'bg-rose-500' : 'bg-emerald-500'}`}></span>
+              </span>
+              <span className="font-extrabold text-slate-200 uppercase tracking-wider text-[11px]">
+                {isMarketClosed ? 'Last Spot at Market Closure' : 'Live Spot Benchmark'}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2.5 text-slate-300 font-mono">
+              <span className="flex items-center gap-1.5 bg-amber-950/60 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-600/30">
+                <strong className="font-bold">Gold Spot:</strong>
+                <span>${spotPrices.goldUsdPerOz.toFixed(2)} USD/oz</span>
+                <span className="text-amber-400/70 text-[11px]">(S${(spotPrices.goldUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})</span>
+              </span>
+
+              <span className="flex items-center gap-1.5 bg-slate-900 text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700">
+                <strong className="font-bold text-slate-300">Silver Spot:</strong>
+                <span>${spotPrices.silverUsdPerOz.toFixed(2)} USD/oz</span>
+                <span className="text-slate-400 text-[11px]">(S${(spotPrices.silverUsdPerOz * spotPrices.usdToSgdRate).toFixed(2)})</span>
+              </span>
+
+              <span className="text-slate-400 text-[11px]">
+                FX: 1 USD = {spotPrices.usdToSgdRate.toFixed(4)} SGD
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 flex-wrap gap-2">
+            {/* Separate Bar Type Toggle & Filter Quick Buttons */}
+            <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
+              <span className="text-slate-400 font-medium px-2 flex items-center gap-1">
+                <Layers className="w-3 h-3 text-amber-400" />
+                <span>Bar View:</span>
+              </span>
+              <button
+                id="table-group-toggle-btn"
+                onClick={() => setGroupByBarType(!groupByBarType)}
+                className={`px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 ${
+                  groupByBarType
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 ring-1 ring-amber-500/30'
+                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
+                }`}
+                title="List Cast Bars separate from Minted Bars with dedicated section headers"
+              >
+                <span>{groupByBarType ? '✓ Separated Sections' : 'Flat List'}</span>
+              </button>
+            </div>
+
+            {onSortByWeight && (
+              <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                <span className="text-slate-400 font-medium px-2 text-[11px] flex items-center gap-1">
+                  <ArrowUpDown className="w-3 h-3 text-amber-400" />
+                  <span>Tabulate by Weight:</span>
+                </span>
+                <button
+                  id="tabulate-weight-desc-btn"
+                  onClick={() => onSortByWeight('desc')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[11px] font-bold transition-all flex items-center gap-1"
+                  title="Tabulate in order of weight (Heavy to Light)"
+                >
+                  <span>Heavy → Light</span>
+                </button>
+                <button
+                  id="tabulate-weight-asc-btn"
+                  onClick={() => onSortByWeight('asc')}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-bold transition-all flex items-center gap-1"
+                  title="Tabulate in order of weight (Light to Heavy)"
+                >
+                  <span>Light → Heavy</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto scrollbar-thin">
         <table className="w-full text-left border-collapse min-w-[980px]">
           <thead>
             <tr className="bg-slate-950/80 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
               <th className="py-4 px-4 w-[28%] font-bold text-slate-300">
-                Item & Spot Value
+                <div className="flex items-center space-x-2">
+                  <span>Item & Spot Value</span>
+                  {isMarketClosed && (
+                    <span className="px-1.5 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-[10px] font-mono normal-case font-medium flex items-center gap-1">
+                      <PauseCircle className="w-3 h-3 text-rose-400" />
+                      At Market Close
+                    </span>
+                  )}
+                </div>
               </th>
 
               {/* Retailer Headers */}
@@ -160,14 +257,65 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
           </thead>
 
           <tbody className="divide-y divide-slate-800/60 text-sm">
-            {computedProducts.map((item) => {
-              const { product, spotValueSgd, spotValueUsd, retailerMetrics, bestBuyRetailerId, hasSpecialOffer, lowestPremiumPct } = item;
-              const flash = rowFlashes[product.id];
-              const sentiment = getMarketSentiment(product, lowestPremiumPct);
+            {(() => {
+              let lastGroup: string | null = null;
 
-              return (
-                <tr
-                  key={product.id}
+              return computedProducts.map((item) => {
+                const { product, spotValueSgd, spotValueUsd, retailerMetrics, bestBuyRetailerId, hasSpecialOffer, lowestPremiumPct } = item;
+                const flash = rowFlashes[product.id];
+                const sentiment = getMarketSentiment(product, lowestPremiumPct);
+
+                // Determine current item group
+                let currentGroup = 'Coins & Sovereigns';
+                if (product.formFactor === 'Bar') {
+                  const bt = product.barType || (product.name.toLowerCase().includes('cast') ? 'Cast' : 'Minted');
+                  currentGroup = bt === 'Cast' ? 'Cast & Poured Bars' : 'Minted & Pressed Bars';
+                }
+
+                const showGroupHeader = groupByBarType && currentGroup !== lastGroup;
+                if (showGroupHeader) {
+                  lastGroup = currentGroup;
+                }
+
+                return (
+                  <React.Fragment key={product.id}>
+                    {showGroupHeader && (
+                      <tr className={`border-y ${
+                        currentGroup === 'Cast & Poured Bars'
+                          ? 'bg-amber-950/70 border-amber-600/50'
+                          : currentGroup === 'Minted & Pressed Bars'
+                          ? 'bg-cyan-950/70 border-cyan-600/50'
+                          : 'bg-slate-900 border-slate-700/80'
+                      }`}>
+                        <td colSpan={4} className="py-2.5 px-4">
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-base">
+                                {currentGroup === 'Cast & Poured Bars' ? '🧱' : '🪙'}
+                              </span>
+                              <span className={`font-extrabold uppercase tracking-wider text-[12px] ${
+                                currentGroup === 'Cast & Poured Bars'
+                                  ? 'text-amber-300'
+                                  : currentGroup === 'Minted & Pressed Bars'
+                                  ? 'text-cyan-300'
+                                  : 'text-slate-200'
+                              }`}>
+                                {currentGroup}
+                              </span>
+                            </div>
+                            <span className="text-slate-400 text-[11px] hidden sm:inline font-mono">
+                              {currentGroup === 'Cast & Poured Bars'
+                                ? 'Poured metal bullion bars with raw finish & low premiums over spot'
+                                : currentGroup === 'Minted & Pressed Bars'
+                                ? 'Precision-minted bullion bars in certicards with serial numbers'
+                                : 'Official government legal tender bullion coins'}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    <tr
                   className={`transition-all duration-500 group cursor-pointer ${
                     flash === 'down'
                       ? 'bg-emerald-950/50 ring-2 ring-emerald-500/80 shadow-lg shadow-emerald-950/50'
@@ -290,6 +438,13 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                               {(product.barType || (product.name.toLowerCase().includes('cast') ? 'Cast' : 'Minted')) === 'Cast' ? 'Cast Bar' : 'Minted Bar'}
                             </span>
                           )}
+                          {/* Single Retailer Exclusive Badge */}
+                          {product.availableRetailers && product.availableRetailers.length === 1 && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-indigo-950/90 text-indigo-300 border border-indigo-500/40 flex items-center gap-1">
+                              <Store className="w-2.5 h-2.5 text-indigo-400" />
+                              <span>{RETAILERS[product.availableRetailers[0]]?.shortName || 'Single Retailer'} Exclusive</span>
+                            </span>
+                          )}
                           {product.isLbmaGoodDelivery ? (
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                               <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
@@ -321,8 +476,25 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                   {/* 3 Retailer Metric Columns */}
                   {retailerKeys.map((rid) => {
                     const metrics = retailerMetrics[rid];
-                    const offer = product.prices[rid].specialOffer;
+                    const offer = product.prices[rid]?.specialOffer;
                     const isBest = rid === bestBuyRetailerId;
+
+                    if (!metrics?.inStock || metrics.buyPriceSgd <= 0) {
+                      return (
+                        <td
+                          key={rid}
+                          className="py-4 px-4 align-middle border-l border-slate-800/80 bg-slate-950/40 text-center"
+                        >
+                          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-500 text-xs font-mono space-y-1 my-2">
+                            <Store className="w-4 h-4 mx-auto text-slate-600" />
+                            <div className="font-semibold text-slate-400 text-[11px]">Not Offered / Out of Stock</div>
+                            <div className="text-[10px] text-slate-500 font-sans">
+                              Unavailable from {RETAILERS[rid].shortName}
+                            </div>
+                          </div>
+                        </td>
+                      );
+                    }
 
                     return (
                       <td
@@ -513,9 +685,11 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                       </td>
                     );
                   })}
-                </tr>
-              );
-            })}
+                    </tr>
+                  </React.Fragment>
+                );
+              });
+            })()}
           </tbody>
         </table>
       </div>
