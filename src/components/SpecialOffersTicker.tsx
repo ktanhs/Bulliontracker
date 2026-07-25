@@ -16,7 +16,7 @@ export const SpecialOffersTicker: React.FC<SpecialOffersTickerProps> = ({
   onSelectSpecialOffer,
   onSelectProduct,
 }) => {
-  const [isMinimized, setIsMinimized] = useState<boolean>(false);
+  const [isMinimized, setIsMinimized] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'promos' | 'coinBulk' | 'barBulk'>('promos');
 
   // Filter selections inside promos/bulk window

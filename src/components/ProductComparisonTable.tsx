@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer } from '../types';
 import { RETAILERS } from '../data/bullionData';
 import { PremiumSparkline } from './PremiumSparkline';
-import { Trophy, ShoppingBag, ArrowUpRight, PlusCircle, Flame, Clock, ExternalLink, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2 } from 'lucide-react';
+import { Trophy, ShoppingBag, ArrowUpRight, PlusCircle, Flame, Clock, ExternalLink, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ShoppingCart, TrendingUp, TrendingDown, Zap, Activity } from 'lucide-react';
+import { getRetailerListingUrl, openRetailerListing } from '../utils/urlUtils';
 
 interface ProductComparisonTableProps {
   computedProducts: ComputedProductMetrics[];
@@ -26,6 +27,71 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
   activeAlertProductIds,
 }) => {
   const retailerKeys: RetailerId[] = ['silverbullion', 'bullionstar', 'lpm'];
+
+  // State to track row flash animation on price refreshes ('up' | 'down')
+  const [rowFlashes, setRowFlashes] = useState<Record<string, 'up' | 'down'>>({});
+  const prevPricesRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const newFlashes: Record<string, 'up' | 'down'> = {};
+    let hasChanges = false;
+
+    computedProducts.forEach((item) => {
+      const pid = item.product.id;
+      const currentPrice = item.retailerMetrics[item.bestBuyRetailerId]?.buyPriceSgd;
+      const previousPrice = prevPricesRef.current[pid];
+
+      if (previousPrice !== undefined && currentPrice !== undefined && previousPrice !== currentPrice) {
+        if (currentPrice < previousPrice) {
+          newFlashes[pid] = 'down'; // Green flash for price drop / cheaper
+          hasChanges = true;
+        } else if (currentPrice > previousPrice) {
+          newFlashes[pid] = 'up'; // Red flash for price increase / higher
+          hasChanges = true;
+        }
+      }
+
+      if (currentPrice !== undefined) {
+        prevPricesRef.current[pid] = currentPrice;
+      }
+    });
+
+    if (hasChanges) {
+      setRowFlashes((prev) => ({ ...prev, ...newFlashes }));
+
+      // Clear flash animation state after 2.5 seconds
+      const timer = setTimeout(() => {
+        setRowFlashes((prev) => {
+          const next = { ...prev };
+          Object.keys(newFlashes).forEach((key) => delete next[key]);
+          return next;
+        });
+      }, 2500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [computedProducts]);
+
+  // Helper function to derive Market Sentiment for each product
+  const getMarketSentiment = (product: Product, lowestPremiumPct: number) => {
+    if (product.metal === 'Gold') {
+      if (lowestPremiumPct <= 2.8) {
+        return { label: 'Strong Buy', type: 'bullish', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
+      }
+      if (lowestPremiumPct <= 4.0) {
+        return { label: 'Bullish Flow', type: 'bullish', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/40' };
+      }
+      return { label: 'Neutral', type: 'neutral', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
+    } else {
+      if (lowestPremiumPct <= 16.0) {
+        return { label: 'High Demand', type: 'bullish', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
+      }
+      if (lowestPremiumPct <= 22.0) {
+        return { label: 'Moderate Demand', type: 'bullish', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/40' };
+      }
+      return { label: 'Stable', type: 'neutral', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
+    }
+  };
 
   const formatMoney = (amountSgd: number, amountUsd: number) => {
     if (currency === 'SGD') {
@@ -95,12 +161,20 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
 
           <tbody className="divide-y divide-slate-800/60 text-sm">
             {computedProducts.map((item) => {
-              const { product, spotValueSgd, spotValueUsd, retailerMetrics, bestBuyRetailerId, hasSpecialOffer } = item;
+              const { product, spotValueSgd, spotValueUsd, retailerMetrics, bestBuyRetailerId, hasSpecialOffer, lowestPremiumPct } = item;
+              const flash = rowFlashes[product.id];
+              const sentiment = getMarketSentiment(product, lowestPremiumPct);
 
               return (
                 <tr
                   key={product.id}
-                  className="hover:bg-slate-800/40 transition-colors group cursor-pointer"
+                  className={`transition-all duration-500 group cursor-pointer ${
+                    flash === 'down'
+                      ? 'bg-emerald-950/50 ring-2 ring-emerald-500/80 shadow-lg shadow-emerald-950/50'
+                      : flash === 'up'
+                      ? 'bg-rose-950/50 ring-2 ring-rose-500/80 shadow-lg shadow-rose-950/50'
+                      : 'hover:bg-slate-800/40'
+                  }`}
                   onClick={() => onSelectProduct?.(item)}
                 >
                   {/* Product Column */}
@@ -129,6 +203,30 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                           <h4 className="font-bold text-slate-100 group-hover:text-amber-300 transition-colors leading-snug">
                             {product.name}
                           </h4>
+
+                          {/* Flash price indicator badge when price refreshes */}
+                          {flash && (
+                            <span
+                              className={`flex-shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 animate-bounce border ${
+                                flash === 'down'
+                                  ? 'bg-emerald-500 text-slate-950 border-emerald-400'
+                                  : 'bg-rose-500 text-white border-rose-400'
+                              }`}
+                            >
+                              <Zap className="w-2.5 h-2.5 fill-current" />
+                              <span>Price Refreshed {flash === 'down' ? '↓' : '↑'}</span>
+                            </span>
+                          )}
+
+                          {/* Market Sentiment Badge */}
+                          <span
+                            className={`flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border ${sentiment.badge}`}
+                            title={`Market Sentiment for ${product.name}: ${sentiment.label} based on current premium (+${lowestPremiumPct}%)`}
+                          >
+                            <Activity className="w-2.5 h-2.5 text-amber-400" />
+                            <span>{sentiment.label}</span>
+                          </span>
+
                           {hasSpecialOffer && (
                             <button
                               onClick={(e) => {
@@ -252,9 +350,13 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                           ) : null}
 
                           {/* Retail Shop Price (ON TOP OF Online Ask Price) */}
-                          <div className="bg-slate-800/60 p-2 rounded-lg border border-slate-700/60 space-y-1">
+                          <div
+                            onClick={(e) => openRetailerListing(rid, product, e)}
+                            className="bg-slate-800/60 hover:bg-slate-800 p-2 rounded-lg border border-slate-700/60 hover:border-amber-500/50 space-y-1 cursor-pointer transition-all group/price"
+                            title={`Click to open ${RETAILERS[rid].name} store listing page`}
+                          >
                             <div className="flex items-center justify-between text-[11px]">
-                              <span className="text-slate-400 font-medium flex items-center gap-1">
+                              <span className="text-slate-400 font-medium flex items-center gap-1 group-hover/price:text-amber-300 transition-colors">
                                 <Store className="w-3 h-3 text-amber-400" />
                                 Retail Shop:
                               </span>
@@ -264,14 +366,17 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                             </div>
 
                             <div className="flex items-center justify-between border-t border-slate-700/40 pt-1">
-                              <span className="text-[11px] text-slate-400 font-medium">Online Ask:</span>
+                              <span className="text-[11px] text-slate-400 font-medium group-hover/price:text-slate-200 flex items-center gap-1 transition-colors">
+                                <span>Online Ask:</span>
+                                <ExternalLink className="w-2.5 h-2.5 text-amber-400 opacity-0 group-hover/price:opacity-100 transition-opacity" />
+                              </span>
                               <div className="text-right">
                                 {offer && (
                                   <span className="text-[10px] text-slate-400 line-through font-mono mr-1">
                                     {formatMoney(offer.originalBuyPriceSgd, offer.originalBuyPriceUsd)}
                                   </span>
                                 )}
-                                <span className={`text-sm font-bold font-mono ${offer ? 'text-rose-300' : 'text-white'}`}>
+                                <span className={`text-sm font-bold font-mono ${offer ? 'text-rose-300' : 'text-white group-hover/price:text-amber-300'} transition-colors`}>
                                   {formatMoney(metrics.buyPriceSgd, metrics.buyPriceUsd)}
                                 </span>
                               </div>
@@ -372,23 +477,38 @@ export const ProductComparisonTable: React.FC<ProductComparisonTableProps> = ({
                             />
                           </div>
 
-                          {/* Action button */}
-                          {onAddToCart && (
+                          {/* Action buttons: Order Online & Add to Calc */}
+                          <div className="mt-2 space-y-1.5">
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onAddToCart(product.id, rid);
-                              }}
-                              className={`w-full mt-2 py-1.5 px-2 text-xs font-semibold rounded-lg border flex items-center justify-center space-x-1.5 transition-all ${
+                              onClick={(e) => openRetailerListing(rid, product, e)}
+                              className={`w-full py-1.5 px-2 text-xs font-bold rounded-lg border flex items-center justify-center space-x-1.5 transition-all shadow-sm ${
                                 offer
-                                  ? 'bg-rose-500 hover:bg-rose-400 text-slate-950 border-rose-400'
-                                  : 'bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 border-slate-700/80'
+                                  ? 'bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-slate-950 border-rose-400'
+                                  : isBest
+                                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400'
+                                  : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/80'
                               }`}
+                              title={`Order directly on ${RETAILERS[rid].name}`}
                             >
-                              <PlusCircle className="w-3.5 h-3.5" />
-                              <span>Add to Calc</span>
+                              <ShoppingCart className="w-3.5 h-3.5" />
+                              <span>Order at {RETAILERS[rid].shortName}</span>
+                              <ExternalLink className="w-3 h-3 ml-0.5 opacity-80" />
                             </button>
-                          )}
+
+                            {onAddToCart && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onAddToCart(product.id, rid);
+                                }}
+                                className="w-full py-1 px-2 text-[11px] font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center space-x-1 transition-all"
+                                title="Add to portfolio calculator"
+                              >
+                                <PlusCircle className="w-3 h-3 text-amber-400" />
+                                <span>Add to Calc</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </td>
                     );

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Currency } from '../types';
-import { RefreshCw, Coins, DollarSign, Calculator, LineChart, Building2, Sparkles, SlidersHorizontal, BellRing, BarChart2 } from 'lucide-react';
+import { RefreshCw, Coins, DollarSign, Calculator, LineChart, Building2, Sparkles, SlidersHorizontal, BellRing, BarChart2, Compass } from 'lucide-react';
 
 interface HeaderProps {
   currency: Currency;
@@ -15,6 +15,7 @@ interface HeaderProps {
   alertsCount?: number;
   triggeredCount?: number;
   onOpenAlertsManager?: () => void;
+  onOpenMarketSentiments?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   alertsCount = 0,
   triggeredCount = 0,
   onOpenAlertsManager,
+  onOpenMarketSentiments,
 }) => {
   const formattedTime = new Date(lastUpdated).toLocaleTimeString('en-US', {
     hour: '2-digit',
@@ -133,6 +135,19 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
+            {/* Market Sentiments Pop-up Button */}
+            {onOpenMarketSentiments && (
+              <button
+                id="top-market-sentiments-btn"
+                onClick={onOpenMarketSentiments}
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold transition-all shadow-sm"
+                title="View Precious Metals Week Ahead Sentiments & Trajectory"
+              >
+                <Compass className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Market Sentiments</span>
+              </button>
+            )}
+
             {/* Price Alerts Manager Button */}
             <button
               id="price-alerts-btn"
@@ -167,6 +182,15 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Bottom Tab Navigation */}
         <div className="flex overflow-x-auto space-x-1 border-t border-slate-800/80 pt-1 pb-1 scrollbar-none">
+          <button
+            id="tab-market-sentiments-btn"
+            onClick={onOpenMarketSentiments}
+            className="flex items-center space-x-2 px-3.5 py-2 text-xs font-extrabold rounded-md whitespace-nowrap bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 border border-amber-500/40 transition-all shadow-sm"
+          >
+            <Compass className="w-3.5 h-3.5 text-amber-400" />
+            <span>Market Sentiments & Trajectory</span>
+          </button>
+
           <button
             id="tab-comparison-btn"
             onClick={() => setActiveTab('comparison')}

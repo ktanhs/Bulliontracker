@@ -1,7 +1,8 @@
 import React from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { X, Trophy, ExternalLink, ShieldCheck, Scale, PlusCircle, Flame, Clock, Tag, BellRing, Store, Building2, CheckCircle2, Layers, BarChart2 } from 'lucide-react';
+import { X, Trophy, ExternalLink, ShieldCheck, Scale, PlusCircle, Flame, Clock, Tag, BellRing, Store, Building2, CheckCircle2, Layers, BarChart2, ShoppingCart } from 'lucide-react';
+import { openRetailerListing } from '../utils/urlUtils';
 
 interface ProductDetailModalProps {
   productMetrics: ComputedProductMetrics | null;
@@ -320,20 +321,31 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </div>
                   )}
 
-                  <div className="mt-3 flex justify-end">
+                  <div className="mt-3 flex items-center justify-end space-x-2">
+                    <button
+                      onClick={(e) => openRetailerListing(rid, product, e)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg flex items-center space-x-1.5 transition-all shadow-sm ${
+                        offer
+                          ? 'bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-slate-950 border border-rose-400'
+                          : isBest
+                          ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                          : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                      }`}
+                    >
+                      <ShoppingCart className="w-3.5 h-3.5" />
+                      <span>Order at {ret.name}</span>
+                      <ExternalLink className="w-3 h-3 ml-0.5 opacity-80" />
+                    </button>
+
                     <button
                       onClick={() => {
                         onAddToCart(product.id, rid);
                         onClose();
                       }}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition-all ${
-                        offer
-                          ? 'bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold'
-                          : 'bg-slate-700 hover:bg-amber-500 hover:text-slate-950 text-slate-200'
-                      }`}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center space-x-1.5 transition-all"
                     >
-                      <PlusCircle className="w-3.5 h-3.5" />
-                      <span>Add to Savings Calc</span>
+                      <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Add to Calc</span>
                     </button>
                   </div>
                 </div>

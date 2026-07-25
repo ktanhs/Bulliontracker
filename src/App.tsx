@@ -30,6 +30,7 @@ import { SetPriceAlertModal } from './components/SetPriceAlertModal';
 import { PriceAlertsManagerModal } from './components/PriceAlertsManagerModal';
 import { PriceAlertToast } from './components/PriceAlertToast';
 import { ComparePremiumsView } from './components/ComparePremiumsView';
+import { MarketSentimentModal } from './components/MarketSentimentModal';
 
 export default function App() {
   const [spotPrices, setSpotPrices] = useState<SpotPrices>(DEFAULT_SPOT_PRICES);
@@ -37,7 +38,7 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // User preferences
-  const [currency, setCurrency] = useState<Currency>('SGD');
+  const [currency, setCurrency] = useState<Currency>('BOTH');
   const [weightUnit, setWeightUnit] = useState<'oz' | 'g' | 'kg'>('oz');
   const [activeTab, setActiveTab] = useState<'comparison' | 'comparePremiums' | 'calculator' | 'charts' | 'retailers' | 'insights'>(
     'comparison'
@@ -65,6 +66,9 @@ export default function App() {
 
   // Selected product modal
   const [selectedProduct, setSelectedProduct] = useState<ComputedProductMetrics | null>(null);
+
+  // Market Sentiment pop-up modal
+  const [isMarketSentimentOpen, setIsMarketSentimentOpen] = useState<boolean>(false);
 
   // Selected special offer deal modal
   const [selectedSpecialOffer, setSelectedSpecialOffer] = useState<{
@@ -425,6 +429,7 @@ export default function App() {
         alertsCount={priceAlerts.length}
         triggeredCount={triggeredNotifications.length}
         onOpenAlertsManager={() => setIsAlertsManagerOpen(true)}
+        onOpenMarketSentiments={() => setIsMarketSentimentOpen(true)}
       />
 
       {/* Spot Price Ticker Bar */}
@@ -584,6 +589,16 @@ export default function App() {
           onSimulatePriceDip={handleSimulatePriceDip}
           triggeredHistory={triggeredHistory}
           onSelectProductById={handleSelectProductById}
+        />
+      )}
+
+      {/* Market Sentiment & Week Ahead Forecast Modal */}
+      {isMarketSentimentOpen && (
+        <MarketSentimentModal
+          currency={currency}
+          spotPrices={spotPrices}
+          computedProducts={allComputedProducts}
+          onClose={() => setIsMarketSentimentOpen(false)}
         />
       )}
 

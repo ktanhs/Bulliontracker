@@ -1,7 +1,8 @@
 import React from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { Trophy, PlusCircle, Flame, Tag, Clock, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2 } from 'lucide-react';
+import { Trophy, PlusCircle, Flame, Tag, Clock, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ExternalLink, ShoppingCart } from 'lucide-react';
+import { openRetailerListing } from '../utils/urlUtils';
 
 interface ProductCardGridProps {
   computedProducts: ComputedProductMetrics[];
@@ -143,24 +144,21 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                   return (
                     <div
                       key={rid}
-                      onClick={(e) => {
-                        if (offer && onSelectSpecialOffer) {
-                          e.stopPropagation();
-                          onSelectSpecialOffer(product, rid, offer);
-                        }
-                      }}
-                      className={`p-3 rounded-xl border transition-all ${
+                      onClick={(e) => openRetailerListing(rid, product, e)}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer group/cardrow ${
                         offer
-                          ? 'bg-rose-950/20 border-rose-500/40 hover:border-rose-400/80 cursor-pointer shadow-sm hover:shadow-rose-900/20'
+                          ? 'bg-rose-950/20 border-rose-500/40 hover:border-rose-400/80 shadow-sm hover:shadow-rose-900/20'
                           : isBest
-                          ? 'bg-amber-500/10 border-amber-500/40'
+                          ? 'bg-amber-500/10 border-amber-500/40 hover:border-amber-400'
                           : 'bg-slate-800/50 border-slate-800 hover:border-slate-700'
                       }`}
+                      title={`Click to open ${ret.name} listing page`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${ret.badgeBg}`}>
-                            {ret.shortName}
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${ret.badgeBg} flex items-center gap-1 group-hover/cardrow:border-amber-400/60 transition-colors`}>
+                            <span>{ret.shortName}</span>
+                            <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover/cardrow:opacity-100" />
                           </span>
                           {offer ? (
                             <span className="flex items-center space-x-1 text-[10px] text-rose-300 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30">
@@ -273,7 +271,17 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                 Lowest Prem: <strong className="text-emerald-400 font-mono">+{item.lowestPremiumPct}%</strong>
               </span>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={(e) => openRetailerListing(bestBuyRetailerId, product, e)}
+                  className="py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center space-x-1 shadow-sm transition-all"
+                  title={`Order at ${RETAILERS[bestBuyRetailerId].name}`}
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  <span>Order</span>
+                  <ExternalLink className="w-2.5 h-2.5 opacity-80" />
+                </button>
+
                 {onComparePremiums && (
                   <button
                     onClick={(e) => {

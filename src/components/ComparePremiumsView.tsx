@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product } from '../types';
 import { RETAILERS } from '../data/bullionData';
+import { getRetailerListingUrl } from '../utils/urlUtils';
 import {
   BarChart2,
   Trophy,
@@ -22,6 +23,7 @@ import {
   X,
   TrendingDown,
   Info,
+  ShoppingCart,
 } from 'lucide-react';
 
 interface ComparePremiumsViewProps {
@@ -539,26 +541,28 @@ export const ComparePremiumsView: React.FC<ComparePremiumsViewProps> = ({
 
                       <td className="px-4 py-3 text-right font-sans">
                         <div className="flex items-center justify-end space-x-1.5">
+                          <a
+                            href={getRetailerListingUrl(rid, product)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-colors flex items-center space-x-1 shadow-sm"
+                            title={`Order ${product.name} on ${ret.name}`}
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            <span>Order</span>
+                            <ExternalLink className="w-3 h-3 opacity-80" />
+                          </a>
+
                           {onAddToCart && (
                             <button
                               onClick={() => onAddToCart(product.id, rid)}
-                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition-colors flex items-center space-x-1"
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition-colors flex items-center space-x-1"
                               title="Add to Calculator"
                             >
-                              <PlusCircle className="w-3.5 h-3.5" />
-                              <span className="hidden lg:inline">Add</span>
+                              <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
+                              <span className="hidden lg:inline">Calc</span>
                             </button>
                           )}
-
-                          <a
-                            href={ret.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors inline-block"
-                            title={`Visit ${ret.name}`}
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
                         </div>
                       </td>
                     </tr>
