@@ -1,0 +1,6 @@
+{
+  "name": "Bullion Tracker - Silver & Gold Retailer Comparison",
+  "description": "Compare gold and silver bars & coins prices, premiums, and spreads across SilverBullion, BullionStar, and LPM in SGD and USD.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
