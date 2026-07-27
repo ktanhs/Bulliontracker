@@ -292,9 +292,11 @@ async function fetchLiveMarketSpotPrices() {
   const isMarketOpen = marketStatusInfo.isOpen;
   const goldMicroTick = isMarketOpen ? (Math.random() - 0.49) * 0.40 : 0;
   const silverMicroTick = isMarketOpen ? (Math.random() - 0.49) * 0.03 : 0;
+  const fxMicroTick = isMarketOpen ? (Math.random() - 0.49) * 0.0006 : 0;
 
   gold = Math.round((gold + goldMicroTick) * 100) / 100;
   silver = Math.round((silver + silverMicroTick) * 100) / 100;
+  fx = Math.round((fx + fxMicroTick) * 10000) / 10000;
 
   currentSpotState = {
     goldUsdPerOz: gold,
@@ -302,6 +304,7 @@ async function fetchLiveMarketSpotPrices() {
     usdToSgdRate: fx,
     goldChange24hPct: fetchedGold ? +0.82 : Math.round(((currentSpotState.goldChange24hPct || 0.65) + (Math.random() - 0.5) * 0.02) * 100) / 100,
     silverChange24hPct: fetchedSilver ? +1.45 : Math.round(((currentSpotState.silverChange24hPct || 1.24) + (Math.random() - 0.5) * 0.02) * 100) / 100,
+    fxChange24hPct: fetchedFx ? -0.05 : Math.round(((currentSpotState.fxChange24hPct || -0.04) + (Math.random() - 0.5) * 0.01) * 100) / 100,
     lastUpdated: new Date().toISOString(),
     source: isMarketOpen ? source : 'Market Close Settlement Feed',
     isLive: isMarketOpen,

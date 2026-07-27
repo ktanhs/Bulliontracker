@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Currency, SpotPrices } from '../types';
-import { TrendingUp, TrendingDown, Coins, ShieldCheck, Scale, ArrowRightLeft, Edit3, Check, X, RefreshCw, Radio, PauseCircle, Clock, Lock, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Coins, ShieldCheck, Scale, ArrowRightLeft, Edit3, Check, X, RefreshCw, Radio, PauseCircle, Clock, Lock, AlertCircle, LineChart } from 'lucide-react';
+import { FxRateTrendModal } from './FxRateTrendModal';
 
 interface SpotPriceTickerProps {
   spotPrices: SpotPrices;
@@ -25,6 +26,7 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
     usdToSgdRate,
     goldChange24hPct,
     silverChange24hPct,
+    fxChange24hPct,
     source,
     isLive,
     lastUpdated,
@@ -33,6 +35,7 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
   } = spotPrices;
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isFxModalOpen, setIsFxModalOpen] = useState(false);
   const [editGold, setEditGold] = useState<string>(goldUsdPerOz.toString());
   const [editSilver, setEditSilver] = useState<string>(silverUsdPerOz.toString());
   const [editFx, setEditFx] = useState<string>(usdToSgdRate.toString());
@@ -389,26 +392,62 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
           </div>
 
           {/* Forex & GST Status Card */}
-          <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-300">
-                <ArrowRightLeft className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Exchange Rate (USD/SGD)</span>
+          <div
+            onClick={() => setIsFxModalOpen(true)}
+            className="bg-gradient-to-br from-slate-800/90 to-slate-900 border border-emerald-500/40 hover:border-emerald-400 rounded-xl p-3.5 relative overflow-hidden shadow-sm hover:shadow-emerald-500/10 flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.015] group"
+            title="Click to view 24-hour USD/SGD Exchange Rate Trend Chart"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center space-x-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1 group-hover:text-emerald-300 transition-colors">
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  <span>Exchange Rate (USD/SGD)</span>
+                </span>
               </div>
-              <div className="flex items-center space-x-1 text-[11px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-                <ShieldCheck className="w-3 h-3" />
-                <span>0% GST IPM</span>
+              <div
+                className={`flex items-center space-x-0.5 text-xs font-bold px-1.5 py-0.5 rounded ${
+                  (fxChange24hPct || -0.05) >= 0
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                }`}
+              >
+                {(fxChange24hPct || -0.05) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                <span>{(fxChange24hPct || -0.05) >= 0 ? `+${(fxChange24hPct || -0.05).toFixed(2)}%` : `${(fxChange24hPct || -0.05).toFixed(2)}%`}</span>
               </div>
             </div>
-            <div className="mt-1 flex items-baseline justify-between">
-              <span className="text-xl font-bold text-white font-mono">
-                1 USD = {usdToSgdRate.toFixed(4)} SGD
-              </span>
-              <span className="text-[11px] text-slate-400">Singapore IPM</span>
+
+            <div className="flex items-baseline justify-between mt-1">
+              <div className="flex items-baseline space-x-2">
+                <span className="text-xl font-bold text-white font-mono group-hover:text-emerald-200 transition-colors">
+                  1 USD = {usdToSgdRate.toFixed(4)} SGD
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-1.5">
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-extrabold px-1.5 py-0.5 rounded border border-emerald-500/30 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all flex items-center gap-1">
+                  <LineChart className="w-3 h-3" />
+                  <span>24h Chart 📈</span>
+                </span>
+                <div className="hidden sm:flex items-center space-x-1 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>0% GST IPM</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* 24-Hour USD/SGD Exchange Rate Trend Modal */}
+      {isFxModalOpen && (
+        <FxRateTrendModal
+          usdToSgdRate={usdToSgdRate}
+          fxChange24hPct={fxChange24hPct}
+          lastUpdated={lastUpdated}
+          onClose={() => setIsFxModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

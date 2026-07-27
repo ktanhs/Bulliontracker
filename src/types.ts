@@ -8,6 +8,7 @@ export interface SpotPrices {
   usdToSgdRate: number;
   goldChange24hPct: number;
   silverChange24hPct: number;
+  fxChange24hPct?: number;
   lastUpdated: string;
   source?: string;
   isLive?: boolean;

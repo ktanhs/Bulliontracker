@@ -147,6 +147,7 @@ export const DEFAULT_SPOT_PRICES: SpotPrices = {
   usdToSgdRate: 1.3480,
   goldChange24hPct: +0.65,
   silverChange24hPct: +1.24,
+  fxChange24hPct: -0.08,
   lastUpdated: new Date().toISOString(),
   marketStatus: 'OPEN',
   lastMarketCloseTime: new Date(Date.now() - 3600000 * 18).toISOString(),
@@ -3468,6 +3469,127 @@ export function generateHistoricalData(currentSpot: SpotPrices): any[] {
   }
 
   return data;
+}
+
+export interface FxDataPoint {
+  time: string;
+  fullDate?: string;
+  hour?: number;
+  index: number;
+  rate: number;
+  changeSgd: number;
+}
+
+/**
+ * Generates USD/SGD exchange rate trend data for 24H, 7D, or 1M (30 days)
+ */
+export function generateFxTrendData(
+  currentRate: number,
+  timeframe: '24H' | '7D' | '1M' = '24H',
+  change24hPct: number = -0.05
+): {
+  data: FxDataPoint[];
+  highRate: number;
+  lowRate: number;
+  openRate: number;
+  changePct: number;
+  changeSgd: number;
+} {
+  const data: FxDataPoint[] = [];
+  const now = new Date();
+
+  let steps = 24;
+  let intervalMs = 3600 * 1000;
+  let expectedTotalChangePct = change24hPct;
+
+  if (timeframe === '7D') {
+    steps = 28;
+    intervalMs = 6 * 3600 * 1000;
+    expectedTotalChangePct = change24hPct * 2.2;
+  } else if (timeframe === '1M') {
+    steps = 30;
+    intervalMs = 24 * 3600 * 1000;
+    expectedTotalChangePct = change24hPct * 4.2;
+  }
+
+  const openRate = currentRate / (1 + expectedTotalChangePct / 100);
+  const totalChange = currentRate - openRate;
+
+  let minRate = Math.min(currentRate, openRate);
+  let maxRate = Math.max(currentRate, openRate);
+
+  for (let i = steps; i >= 0; i--) {
+    const t = new Date(now.getTime() - i * intervalMs);
+    let timeStr = '';
+
+    if (timeframe === '24H') {
+      timeStr = i === 0 ? 'Now' : t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    } else if (timeframe === '7D') {
+      timeStr = i === 0 ? 'Now' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', hour12: false });
+    } else {
+      timeStr = i === 0 ? 'Today' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    const fullDateStr = t.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const progress = (steps - i) / steps;
+
+    const wave =
+      timeframe === '24H'
+        ? Math.sin(progress * Math.PI * 2.5) * 0.0012 + Math.cos(progress * Math.PI * 1.5) * 0.0008
+        : timeframe === '7D'
+        ? Math.sin(progress * Math.PI * 4) * 0.0035 + Math.cos(progress * Math.PI * 2) * 0.002
+        : Math.sin(progress * Math.PI * 6) * 0.007 + Math.cos(progress * Math.PI * 3) * 0.004;
+
+    let simulatedRate = openRate + totalChange * progress + wave;
+    if (i === 0) simulatedRate = currentRate;
+
+    simulatedRate = Math.round(simulatedRate * 10000) / 10000;
+
+    if (simulatedRate < minRate) minRate = simulatedRate;
+    if (simulatedRate > maxRate) maxRate = simulatedRate;
+
+    data.push({
+      time: timeStr,
+      fullDate: fullDateStr,
+      hour: 24 - i,
+      index: steps - i,
+      rate: simulatedRate,
+      changeSgd: Math.round((simulatedRate - openRate) * 10000) / 10000,
+    });
+  }
+
+  const changeSgd = Math.round((currentRate - openRate) * 10000) / 10000;
+  const changePct = Math.round(((currentRate - openRate) / openRate) * 100 * 100) / 100;
+
+  return {
+    data,
+    highRate: Math.round(maxRate * 10000) / 10000,
+    lowRate: Math.round(minRate * 10000) / 10000,
+    openRate: Math.round(openRate * 10000) / 10000,
+    changePct,
+    changeSgd,
+  };
+}
+
+/**
+ * Backward compatibility wrapper for 24h FX data
+ */
+export function generate24hFxData(currentRate: number, change24hPct: number = -0.05) {
+  const trend = generateFxTrendData(currentRate, '24H', change24hPct);
+  return {
+    data: trend.data,
+    high24h: trend.highRate,
+    low24h: trend.lowRate,
+    open24h: trend.openRate,
+    changeSgd24h: trend.changeSgd,
+  };
 }
 
 function roundTwoDecimals(val: number): number {
