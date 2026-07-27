@@ -1,6 +1,6 @@
 import React from 'react';
-import { Currency, RetailerApiStatus, SpotPrices } from '../types';
-import { RefreshCw, Coins, DollarSign, Calculator, LineChart, Building2, Sparkles, SlidersHorizontal, BellRing, BarChart2, Compass, Server, Radio, PauseCircle, Clock } from 'lucide-react';
+import { Currency, RetailerApiStatus, SpotPrices, UserProfile } from '../types';
+import { RefreshCw, Coins, DollarSign, Calculator, LineChart, Building2, Sparkles, SlidersHorizontal, BellRing, BarChart2, Compass, Server, Radio, PauseCircle, Clock, User, UserCheck, PackageCheck, FolderHeart, LogIn } from 'lucide-react';
 
 interface HeaderProps {
   currency: Currency;
@@ -19,6 +19,10 @@ interface HeaderProps {
   onOpenApiStatusModal?: () => void;
   apiStatuses?: RetailerApiStatus[];
   spotPrices?: SpotPrices;
+  currentUser?: UserProfile | null;
+  ownedItemsCount?: number;
+  onOpenAuthModal?: () => void;
+  onOpenUserProfileModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -38,6 +42,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenApiStatusModal,
   apiStatuses = [],
   spotPrices,
+  currentUser,
+  ownedItemsCount = 0,
+  onOpenAuthModal,
+  onOpenUserProfileModal,
 }) => {
   const isMarketClosed = spotPrices?.marketStatus === 'CLOSED' || spotPrices?.isLive === false;
 
@@ -195,11 +203,51 @@ export const Header: React.FC<HeaderProps> = ({
               <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Refresh Feed</span>
             </button>
+
+            {/* User Account / Profile Button */}
+            {currentUser ? (
+              <button
+                id="user-profile-top-btn"
+                onClick={onOpenUserProfileModal}
+                className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-amber-600/30 hover:from-amber-500/30 hover:to-amber-600/40 text-amber-300 border border-amber-500/50 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
+                title="View My Stack & Account Profile"
+              >
+                <span className="text-base">{currentUser.avatarEmoji}</span>
+                <span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-500 text-slate-950">
+                  {ownedItemsCount}
+                </span>
+              </button>
+            ) : (
+              <button
+                id="user-signup-top-btn"
+                onClick={onOpenAuthModal}
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-lg text-xs font-extrabold transition-all shadow-md cursor-pointer"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Sign Up / Sign In</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Bottom Tab Navigation */}
         <div className="flex overflow-x-auto space-x-1 border-t border-slate-800/80 pt-1 pb-1 scrollbar-none">
+          <button
+            id="tab-my-stack-btn"
+            onClick={currentUser ? onOpenUserProfileModal : onOpenAuthModal}
+            className="flex items-center space-x-2 px-3.5 py-2 text-xs font-extrabold rounded-md whitespace-nowrap bg-slate-800 hover:bg-slate-750 text-amber-300 border border-amber-500/40 transition-all shadow-sm"
+            title="Manage My Bullion Stack Holdings & Items of Interest"
+          >
+            <PackageCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>My Stack & Interest Profile</span>
+            {ownedItemsCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-500 text-slate-950">
+                {ownedItemsCount}
+              </span>
+            )}
+          </button>
+
           <button
             id="tab-alerts-btn"
             onClick={onOpenAlertsManager}

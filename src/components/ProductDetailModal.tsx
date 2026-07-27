@@ -1,7 +1,7 @@
 import React from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer, SpotPrices } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { X, Trophy, ExternalLink, ShieldCheck, Scale, PlusCircle, Flame, Clock, Tag, BellRing, Store, Building2, CheckCircle2, Layers, BarChart2, ShoppingCart, Radio } from 'lucide-react';
+import { X, Trophy, ExternalLink, ShieldCheck, Scale, PlusCircle, Flame, Clock, Tag, BellRing, Store, Building2, CheckCircle2, Layers, BarChart2, ShoppingCart, Radio, PackageCheck } from 'lucide-react';
 import { openRetailerListing } from '../utils/urlUtils';
 
 interface ProductDetailModalProps {
@@ -13,6 +13,7 @@ interface ProductDetailModalProps {
   onSelectSpecialOffer?: (product: Product, retailerId: RetailerId, offer: SpecialOffer) => void;
   onSetPriceAlert?: (product: ComputedProductMetrics) => void;
   onComparePremiums?: (product: ComputedProductMetrics) => void;
+  onQuickAddToStack?: (product: Product, defaultPriceSgd: number) => void;
   activeAlertProductIds?: Set<string>;
 }
 
@@ -27,6 +28,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onSelectSpecialOffer,
   onSetPriceAlert,
   onComparePremiums,
+  onQuickAddToStack,
   activeAlertProductIds,
 }) => {
   if (!productMetrics) return null;
@@ -415,7 +417,21 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
             <span>Qualifies for 0% GST (Investment Precious Metals IPM) tax exemption in Singapore.</span>
           </div>
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <div className="flex items-center space-x-2 w-full sm:w-auto flex-wrap gap-y-2">
+            {onQuickAddToStack && (
+              <button
+                onClick={() => {
+                  const bestBuySgd = productMetrics.retailerMetrics[productMetrics.bestBuyRetailerId].buyPriceSgd;
+                  onClose();
+                  onQuickAddToStack(product, bestBuySgd);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 font-extrabold text-xs rounded-xl border border-emerald-500/40 transition-colors flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
+                title="Add to My Owned Bullion Stack (Pulls listed price & allows modification)"
+              >
+                <PackageCheck className="w-4 h-4 text-emerald-400" />
+                <span>+ Add Owned Item</span>
+              </button>
+            )}
             {onComparePremiums && (
               <button
                 onClick={() => {

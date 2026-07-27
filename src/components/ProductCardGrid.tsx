@@ -1,7 +1,7 @@
 import React from 'react';
 import { ComputedProductMetrics, Currency, RetailerId, Product, SpecialOffer } from '../types';
 import { RETAILERS } from '../data/bullionData';
-import { Trophy, PlusCircle, Flame, Tag, Clock, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ExternalLink, ShoppingCart, PauseCircle } from 'lucide-react';
+import { Trophy, PlusCircle, Flame, Tag, Clock, BellRing, Store, ShieldCheck, Building2, Layers, BarChart2, ExternalLink, ShoppingCart, PauseCircle, FolderHeart, PackageCheck, Bookmark } from 'lucide-react';
 import { openRetailerListing } from '../utils/urlUtils';
 
 interface ProductCardGridProps {
@@ -12,6 +12,9 @@ interface ProductCardGridProps {
   onSelectSpecialOffer?: (product: Product, retailerId: RetailerId, offer: SpecialOffer) => void;
   onSetPriceAlert?: (product: ComputedProductMetrics) => void;
   onComparePremiums?: (product: ComputedProductMetrics) => void;
+  onToggleInterest?: (product: Product, priceSgd: number) => void;
+  onQuickAddToStack?: (product: Product, priceSgd: number) => void;
+  interestProductIds?: Set<string>;
   activeAlertProductIds?: Set<string>;
   isMarketClosed?: boolean;
   priceDisplayMode?: 'BUY' | 'SELL_BACK' | 'BOTH';
@@ -27,6 +30,9 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
   onSelectSpecialOffer,
   onSetPriceAlert,
   onComparePremiums,
+  onToggleInterest,
+  onQuickAddToStack,
+  interestProductIds,
   activeAlertProductIds,
   isMarketClosed = false,
   priceDisplayMode = 'BUY',
@@ -34,13 +40,12 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
   const retailerKeys: RetailerId[] = ['silverbullion', 'bullionstar', 'lpm'];
 
   const formatMoney = (amountSgd: number, amountUsd: number) => {
-    if (currency === 'SGD') {
-      return `S$${amountSgd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
+    const sgdStr = `S$${amountSgd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const usdStr = `$${amountUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
     if (currency === 'USD') {
-      return `$${amountUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      return `${usdStr} (${sgdStr})`;
     }
-    return `S$${amountSgd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ($${amountUsd.toFixed(2)})`;
+    return `${sgdStr} (${usdStr})`;
   };
 
   return (
@@ -48,6 +53,8 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
       {computedProducts.map((item) => {
         const { product, spotValueSgd, spotValueUsd, retailerMetrics, bestBuyRetailerId, hasSpecialOffer } = item;
         const hasActiveAlert = activeAlertProductIds?.has(product.id) || false;
+        const isInterested = interestProductIds?.has(product.id) || false;
+        const bestBuySgd = retailerMetrics[bestBuyRetailerId].buyPriceSgd;
 
         return (
           <div
@@ -340,7 +347,39 @@ export const ProductCardGrid: React.FC<ProductCardGridProps> = ({
                 Lowest Prem: <strong className="text-emerald-400 font-mono">+{item.lowestPremiumPct}%</strong>
               </span>
 
-              <div className="flex items-center space-x-1.5">
+              <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                {onToggleInterest && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleInterest(product, bestBuySgd);
+                    }}
+                    className={`py-1.5 px-2.5 rounded-xl text-xs font-bold flex items-center space-x-1 border transition-all ${
+                      isInterested
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
+                        : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+                    }`}
+                    title={isInterested ? 'In your Items of Interest' : 'Add to Items of Interest Wishlist'}
+                  >
+                    <FolderHeart className={`w-3.5 h-3.5 ${isInterested ? 'fill-slate-950' : ''}`} />
+                    <span className="hidden sm:inline">{isInterested ? 'Interest' : 'Interest'}</span>
+                  </button>
+                )}
+
+                {onQuickAddToStack && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onQuickAddToStack(product, bestBuySgd);
+                    }}
+                    className="py-1.5 px-2.5 rounded-xl text-xs font-extrabold flex items-center space-x-1 border border-emerald-500/40 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 transition-all shadow-sm"
+                    title="Add to My Owned Bullion Stack"
+                  >
+                    <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="hidden sm:inline">+ Stack</span>
+                  </button>
+                )}
+
                 <button
                   onClick={(e) => openRetailerListing(bestBuyRetailerId, product, e)}
                   className="py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center space-x-1 shadow-sm transition-all"

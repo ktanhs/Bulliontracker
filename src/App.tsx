@@ -33,6 +33,15 @@ import { PriceAlertToast } from './components/PriceAlertToast';
 import { ComparePremiumsView } from './components/ComparePremiumsView';
 import { MarketSentimentModal } from './components/MarketSentimentModal';
 import { RetailerApiStatusModal } from './components/RetailerApiStatusModal';
+import { AuthModal } from './components/AuthModal';
+import { UserProfileModal } from './components/UserProfileModal';
+import { UserProfile, UserOwnedItem } from './types';
+import {
+  getActiveUser,
+  getUserOwnedItems,
+  toggleProductInterest,
+  addOrUpdateOwnedItem,
+} from './utils/userAuth';
 
 
 export default function App() {
@@ -77,6 +86,65 @@ export default function App() {
   // Retailer Website API status state & modal
   const [apiStatuses, setApiStatuses] = useState<RetailerApiStatus[]>([]);
   const [isApiStatusModalOpen, setIsApiStatusModalOpen] = useState<boolean>(false);
+
+  // User Authentication & Profile Stack State
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => getActiveUser());
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState<boolean>(false);
+  const [quickAddProduct, setQuickAddProduct] = useState<{ product: Product; defaultPriceSgd: number } | null>(null);
+  const [userItems, setUserItems] = useState<UserOwnedItem[]>(() =>
+    currentUser ? getUserOwnedItems(currentUser.id) : []
+  );
+
+  const refreshUserItems = () => {
+    if (currentUser) {
+      setUserItems(getUserOwnedItems(currentUser.id));
+    } else {
+      setUserItems([]);
+    }
+  };
+
+  const handleUserAuthenticated = (user: UserProfile) => {
+    setCurrentUser(user);
+    setUserItems(getUserOwnedItems(user.id));
+  };
+
+  const handleToggleInterest = (product: Product, defaultPriceSgd: number) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    toggleProductInterest(
+      currentUser.id,
+      {
+        id: product.id,
+        name: product.name,
+        metal: product.metal,
+        formFactor: product.formFactor,
+        weightOz: product.weightOz,
+        imageUrl: product.imageUrl,
+      },
+      defaultPriceSgd
+    );
+    refreshUserItems();
+  };
+
+  const handleQuickAddToStack = (product: Product, defaultPriceSgd: number) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setQuickAddProduct({ product, defaultPriceSgd });
+    setIsUserProfileModalOpen(true);
+  };
+
+  const interestProductIds = useMemo(() => {
+    return new Set(userItems.filter((i) => !i.isOwned).map((i) => i.productId));
+  }, [userItems]);
+
+  const ownedItemsCount = useMemo(() => {
+    return userItems.filter((i) => i.isOwned).length;
+  }, [userItems]);
 
   // Selected special offer deal modal
 
@@ -616,6 +684,10 @@ export default function App() {
         onOpenApiStatusModal={() => setIsApiStatusModalOpen(true)}
         apiStatuses={apiStatuses}
         spotPrices={spotPrices}
+        currentUser={currentUser}
+        ownedItemsCount={ownedItemsCount}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenUserProfileModal={() => setIsUserProfileModalOpen(true)}
       />
 
 
@@ -627,6 +699,7 @@ export default function App() {
         onCustomSpotUpdate={handleCustomSpotUpdate}
         onRefreshLive={() => loadPrices(true)}
         isRefreshing={isRefreshing}
+        onOpenMarketSentiments={() => setIsMarketSentimentOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -675,6 +748,9 @@ export default function App() {
                 onSelectSpecialOffer={handleSelectSpecialOffer}
                 onSetPriceAlert={(p) => setCreateAlertProduct(p)}
                 onComparePremiums={(p) => setCompareModalProduct(p)}
+                onToggleInterest={handleToggleInterest}
+                onQuickAddToStack={handleQuickAddToStack}
+                interestProductIds={interestProductIds}
                 activeAlertProductIds={activeAlertProductIds}
                 isMarketClosed={spotPrices.marketStatus === 'CLOSED' || spotPrices.isLive === false}
                 priceDisplayMode={priceDisplayMode}
@@ -735,6 +811,7 @@ export default function App() {
         onSelectSpecialOffer={handleSelectSpecialOffer}
         onSetPriceAlert={(p) => setCreateAlertProduct(p)}
         onComparePremiums={(p) => setCompareModalProduct(p)}
+        onQuickAddToStack={handleQuickAddToStack}
         activeAlertProductIds={activeAlertProductIds}
       />
 
@@ -822,6 +899,34 @@ export default function App() {
           onClose={() => setIsApiStatusModalOpen(false)}
           onRefresh={() => loadPrices(true)}
           isRefreshing={isRefreshing}
+        />
+      )}
+
+      {/* User Authentication Modal (Sign Up & Sign In) */}
+      {isAuthModalOpen && (
+        <AuthModal
+          onClose={() => setIsAuthModalOpen(false)}
+          onUserAuthenticated={handleUserAuthenticated}
+        />
+      )}
+
+      {/* User Profile & Bullion Holdings / Items of Interest Modal */}
+      {isUserProfileModalOpen && currentUser && (
+        <UserProfileModal
+          user={currentUser}
+          computedProducts={allComputedProducts}
+          currency={currency}
+          onClose={() => {
+            setIsUserProfileModalOpen(false);
+            setQuickAddProduct(null);
+          }}
+          onUserUpdated={(updated) => {
+            setCurrentUser(updated);
+            refreshUserItems();
+          }}
+          onItemsUpdated={refreshUserItems}
+          spotPrices={spotPrices}
+          initialAddProduct={quickAddProduct}
         />
       )}
 

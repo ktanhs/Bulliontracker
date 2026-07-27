@@ -202,3 +202,38 @@ export interface RetailerApiStatus {
   syncFrequencySec: number;
   ipmGstVerified: boolean;
 }
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  avatarEmoji: string;
+  investorType: 'Physical Stacker' | 'Bullion Collector' | 'Institutional Accumulator' | 'Retail Investor';
+  preferredCurrency: 'SGD' | 'USD';
+  vaultLocation: string;
+  bio?: string;
+  createdAt: string;
+}
+
+export interface UserOwnedItem {
+  id: string;
+  userId: string;
+  productId: string;
+  productName: string;
+  brand?: string;
+  metal: MetalType;
+  formFactor: FormFactor;
+  weightOz: number;
+  imageUrl: string;
+  isOwned: boolean; // true = Owned Stack, false = Item of Interest / Wishlist
+  quantity: number;
+  purchasePriceSgd: number;
+  purchasePriceUsd: number;
+  purchaseCurrency: 'SGD' | 'USD';
+  purchaseDate: string;
+  retailerAcquired: string; // e.g. "Silver Bullion SG", "BullionStar", "LPM HK", "Other"
+  storageNote?: string;
+  invoiceFileName?: string;
+  invoiceDataUrl?: string;
+  createdAt: string;
+}

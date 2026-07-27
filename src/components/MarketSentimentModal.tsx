@@ -20,7 +20,8 @@ import {
   Sparkles,
   ShoppingCart,
   ExternalLink,
-  Radio
+  Radio,
+  Scale
 } from 'lucide-react';
 
 interface MarketSentimentModalProps {
@@ -31,6 +32,14 @@ interface MarketSentimentModalProps {
 }
 
 type MetalType = 'gold' | 'silver' | 'platinum' | 'palladium';
+
+interface TargetHorizon {
+  label: string;
+  timeframe: string;
+  targetUsd: number;
+  targetSgd: number;
+  keyDriver: string;
+}
 
 interface MetalSentimentData {
   id: MetalType;
@@ -49,6 +58,11 @@ interface MetalSentimentData {
     bullishPct: number;
     neutralPct: number;
     bearishPct: number;
+  };
+  targetTimeframes: {
+    shortTerm: TargetHorizon;
+    midTerm: TargetHorizon;
+    longTerm: TargetHorizon;
   };
   keyDrivers: { title: string; desc: string; impact: 'High' | 'Medium' | 'Positive' | 'Neutral' }[];
   technicalLevels: {
@@ -90,6 +104,29 @@ const METAL_DATA: Record<MetalType, MetalSentimentData> = {
       bullishPct: 72,
       neutralPct: 18,
       bearishPct: 10,
+    },
+    targetTimeframes: {
+      shortTerm: {
+        label: 'Near-Term Target',
+        timeframe: '1 - 3 Months (Q3 2026)',
+        targetUsd: 2820,
+        targetSgd: 3780,
+        keyDriver: 'Central bank accumulation & interest rate cut expectations',
+      },
+      midTerm: {
+        label: 'Mid-Term Target',
+        timeframe: '3 - 6 Months (Q4 2026)',
+        targetUsd: 2910,
+        targetSgd: 3890,
+        keyDriver: 'Institutional hedging & seasonal Q4 physical retail demand',
+      },
+      longTerm: {
+        label: 'Long-Term Target',
+        timeframe: '12 Months (2027)',
+        targetUsd: 3100,
+        targetSgd: 4150,
+        keyDriver: 'Global monetary expansion & structural reserve diversification',
+      },
     },
     keyDrivers: [
       {
@@ -146,6 +183,29 @@ const METAL_DATA: Record<MetalType, MetalSentimentData> = {
       neutralPct: 12,
       bearishPct: 8,
     },
+    targetTimeframes: {
+      shortTerm: {
+        label: 'Near-Term Target',
+        timeframe: '1 - 3 Months (Q3 2026)',
+        targetUsd: 32.10,
+        targetSgd: 43.00,
+        keyDriver: 'Photovoltaic solar cell production surge & COMEX vault depletion',
+      },
+      midTerm: {
+        label: 'Mid-Term Target',
+        timeframe: '3 - 6 Months (Q4 2026)',
+        targetUsd: 33.00,
+        targetSgd: 44.20,
+        keyDriver: 'Gold/Silver ratio compression towards 78:1 historical median',
+      },
+      longTerm: {
+        label: 'Long-Term Target',
+        timeframe: '12 Months (2027)',
+        targetUsd: 36.00,
+        targetSgd: 48.20,
+        keyDriver: '5th consecutive global annual physical deficit & industrial shortage',
+      },
+    },
     keyDrivers: [
       {
         title: 'Industrial Solar & EV Dual-Demand Surplus',
@@ -201,6 +261,29 @@ const METAL_DATA: Record<MetalType, MetalSentimentData> = {
       neutralPct: 30,
       bearishPct: 12,
     },
+    targetTimeframes: {
+      shortTerm: {
+        label: 'Near-Term Target',
+        timeframe: '1 - 3 Months (Q3 2026)',
+        targetUsd: 1010,
+        targetSgd: 1350,
+        keyDriver: 'South African power grid supply tightness & auto substitution',
+      },
+      midTerm: {
+        label: 'Mid-Term Target',
+        timeframe: '3 - 6 Months (Q4 2026)',
+        targetUsd: 1050,
+        targetSgd: 1405,
+        keyDriver: 'Hybrid vehicle catalytic converter demand recovery',
+      },
+      longTerm: {
+        label: 'Long-Term Target',
+        timeframe: '12 Months (2027)',
+        targetUsd: 1150,
+        targetSgd: 1540,
+        keyDriver: 'Green hydrogen electrolyzer catalyst adoption expansion',
+      },
+    },
     keyDrivers: [
       {
         title: 'Automotive Catalyst Substitution Shift',
@@ -255,6 +338,29 @@ const METAL_DATA: Record<MetalType, MetalSentimentData> = {
       bullishPct: 42,
       neutralPct: 38,
       bearishPct: 20,
+    },
+    targetTimeframes: {
+      shortTerm: {
+        label: 'Near-Term Target',
+        timeframe: '1 - 3 Months (Q3 2026)',
+        targetUsd: 980,
+        targetSgd: 1310,
+        keyDriver: 'Automotive restock cycle & short-covering rallies',
+      },
+      midTerm: {
+        label: 'Mid-Term Target',
+        timeframe: '3 - 6 Months (Q4 2026)',
+        targetUsd: 1020,
+        targetSgd: 1365,
+        keyDriver: 'ICE auto production stabilization in emerging markets',
+      },
+      longTerm: {
+        label: 'Long-Term Target',
+        timeframe: '12 Months (2027)',
+        targetUsd: 1100,
+        targetSgd: 1470,
+        keyDriver: 'Niche industrial catalyst applications & mine discipline',
+      },
     },
     keyDrivers: [
       {
@@ -397,6 +503,32 @@ export const MarketSentimentModal: React.FC<MarketSentimentModalProps> = ({
     }
     return `S$${rangeSgd[0].toLocaleString()} - S$${rangeSgd[1].toLocaleString()} ($${rangeUsd[0]} - $${rangeUsd[1]})`;
   };
+
+  // Compute dynamic daily roadmap dates starting from today
+  const dynamicSchedule = useMemo(() => {
+    const today = new Date();
+    return baseData.weeklySchedule.map((item, idx) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + idx);
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dateFormatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const isToday = idx === 0;
+      return {
+        ...item,
+        dayLabel: isToday ? `Today (${dayName})` : dayName,
+        dateLabel: dateFormatted,
+        isToday,
+      };
+    });
+  }, [baseData]);
+
+  // Live Gold/Silver Ratio computations
+  const liveGsr = useMemo(() => {
+    return (spotPrices.goldUsdPerOz / (spotPrices.silverUsdPerOz || 1)).toFixed(2);
+  }, [spotPrices.goldUsdPerOz, spotPrices.silverUsdPerOz]);
+
+  const liveGoldSgd = useMemo(() => spotPrices.goldUsdPerOz * spotPrices.usdToSgdRate, [spotPrices.goldUsdPerOz, spotPrices.usdToSgdRate]);
+  const liveSilverSgd = useMemo(() => spotPrices.silverUsdPerOz * spotPrices.usdToSgdRate, [spotPrices.silverUsdPerOz, spotPrices.usdToSgdRate]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
@@ -555,6 +687,80 @@ export const MarketSentimentModal: React.FC<MarketSentimentModalProps> = ({
             </div>
           </div>
 
+          {/* Multi-Horizon Price Target & Trajectory Timeframe Matrix */}
+          <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 border border-amber-500/40 p-4 rounded-xl space-y-3.5 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/20 pb-2.5">
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/40">
+                  <TrendingUp className="w-4 h-4 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-300 flex items-center gap-2">
+                    <span>{baseData.name} ({baseData.symbol}) Multi-Horizon Price Targets & Timeframes</span>
+                    <span className="px-2 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-mono font-bold">
+                      Live Baseline: {formatMoney(liveSpotSgd, liveSpotUsd)}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Live target price trajectories, expected returns vs. current live spot quote, and underlying catalyst drivers
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { key: 'shortTerm', horizon: baseData.targetTimeframes.shortTerm, bg: 'from-amber-500/10 to-slate-900 border-amber-500/30' },
+                { key: 'midTerm', horizon: baseData.targetTimeframes.midTerm, bg: 'from-emerald-500/10 to-slate-900 border-emerald-500/40' },
+                { key: 'longTerm', horizon: baseData.targetTimeframes.longTerm, bg: 'from-indigo-500/10 to-slate-900 border-indigo-500/30' },
+              ].map(({ key, horizon, bg }) => {
+                const upsidePct = ((horizon.targetSgd - liveSpotSgd) / liveSpotSgd) * 100;
+                const isPositive = upsidePct >= 0;
+
+                return (
+                  <div key={key} className={`bg-gradient-to-b ${bg} border p-3.5 rounded-xl space-y-2 flex flex-col justify-between`}>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
+                          {horizon.label}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono font-bold">
+                          {horizon.timeframe}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 space-y-0.5">
+                        <span className="text-[10px] text-slate-400 block uppercase font-bold">Target Price</span>
+                        <div className="text-xl font-black font-mono text-white flex items-baseline gap-2">
+                          <span>S${horizon.targetSgd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span className="text-xs text-slate-400 font-normal">(${horizon.targetUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                        </div>
+                      </div>
+
+                      {/* Live Upside / Expected Return Indicator */}
+                      <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-semibold">Variance vs Live Spot:</span>
+                        <span className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded border flex items-center gap-1 ${
+                          isPositive
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                            : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                        }`}>
+                          {isPositive ? <TrendingUp className="w-3 h-3 text-emerald-400" /> : <TrendingDown className="w-3 h-3 text-rose-400" />}
+                          <span>{isPositive ? '+' : ''}{upsidePct.toFixed(1)}%</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 mt-2 bg-slate-950/60 p-2 rounded border border-slate-800 leading-snug">
+                      <strong className="text-amber-300 text-[10px] uppercase font-bold block mb-0.5">Key Catalyst Driver:</strong>
+                      {horizon.keyDriver}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Live Physical Retail Bullion Quotes Table */}
           {liveRetailQuotes.length > 0 && (
             <div className="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl space-y-3">
@@ -681,20 +887,93 @@ export const MarketSentimentModal: React.FC<MarketSentimentModalProps> = ({
             </div>
           </div>
 
+          {/* Dedicated Live Gold/Silver Ratio & Arbitrage Trajectory Card */}
+          <div className="bg-gradient-to-r from-indigo-950/80 via-slate-900 to-indigo-950/80 border border-indigo-500/50 p-4 rounded-xl space-y-3 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-500/30 pb-2.5">
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-indigo-500/20 text-indigo-300 rounded-lg border border-indigo-500/40">
+                  <Scale className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                    Live Gold / Silver Ratio (Au/Ag) Analysis & Daily Trajectory
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Real-time valuation metric & daily physical arbitrage target tracking
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-mono font-bold flex items-center gap-1">
+                  <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+                  Live Ratio: {liveGsr} : 1
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-700/80 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Physical Ratio Breakdown</span>
+                <div className="text-lg font-black font-mono text-indigo-200">
+                  1 oz Gold = {liveGsr} oz Silver
+                </div>
+                <p className="text-[11px] text-slate-400 font-mono">
+                  S${liveGoldSgd.toFixed(2)} / S${liveSilverSgd.toFixed(2)} per oz
+                </p>
+              </div>
+
+              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-700/80 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">10-Year Historical Mean Comparison</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-base font-bold font-mono text-white">75.0 : 1 Mean</span>
+                  <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    +{((parseFloat(liveGsr) - 75) / 75 * 100).toFixed(1)}% Elevated
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Current {liveGsr}:1 ratio signals Silver is historically undervalued vs Gold.
+                </p>
+              </div>
+
+              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-700/80 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Daily Trajectory & Arbitrage Signal</span>
+                <div className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                  <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Targeting Compression to 78:1</span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Physical Silver accumulation (100oz / 1kg bars) favoured for ratio normalization.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Daily Outlook Timeline (Mon - Fri) */}
           <div className="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl space-y-3">
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-amber-400" />
-              Daily Event & Volatility Roadmap (Mon - Fri)
+              Daily Event & Volatility Roadmap (Rolling 5-Day Schedule)
             </h4>
 
             <div className="space-y-2">
-              {baseData.weeklySchedule.map((item, idx) => (
-                <div key={idx} className="bg-slate-900/80 p-3 rounded-lg border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              {dynamicSchedule.map((item, idx) => (
+                <div key={idx} className={`p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-all ${
+                  item.isToday
+                    ? 'bg-amber-500/10 border-amber-500/50 shadow-sm'
+                    : 'bg-slate-900/80 border-slate-700/60'
+                }`}>
                   <div className="flex items-center space-x-3">
-                    <div className="w-20 flex-shrink-0">
-                      <span className="text-xs font-bold text-amber-300 block">{item.day}</span>
-                      <span className="text-[10px] text-slate-500">{item.dateLabel}</span>
+                    <div className="w-28 flex-shrink-0">
+                      <div className="flex items-center space-x-1">
+                        <span className="text-xs font-bold text-amber-300 block">{item.dayLabel}</span>
+                        {item.isToday && (
+                          <span className="px-1 py-0.2 bg-amber-500 text-slate-950 font-extrabold text-[9px] rounded">
+                            TODAY
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">{item.dateLabel}</span>
                     </div>
                     <div>
                       <span className="text-xs font-semibold text-slate-200 block">{item.event}</span>

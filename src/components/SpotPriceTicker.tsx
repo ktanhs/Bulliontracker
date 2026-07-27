@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Currency, SpotPrices } from '../types';
-import { TrendingUp, TrendingDown, Coins, ShieldCheck, Scale, ArrowRightLeft, Edit3, Check, X, RefreshCw, Radio, PauseCircle, Clock, Lock, AlertCircle, LineChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, Coins, ShieldCheck, Scale, ArrowRightLeft, Edit3, Check, X, RefreshCw, Radio, PauseCircle, Clock, Lock, AlertCircle, LineChart, Compass, Sparkles, Activity } from 'lucide-react';
 import { FxRateTrendModal } from './FxRateTrendModal';
 
 interface SpotPriceTickerProps {
@@ -10,6 +10,7 @@ interface SpotPriceTickerProps {
   onCustomSpotUpdate?: (custom: { goldUsdPerOz: number; silverUsdPerOz: number; usdToSgdRate: number }) => void;
   onRefreshLive?: () => void;
   isRefreshing?: boolean;
+  onOpenMarketSentiments?: () => void;
 }
 
 export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
@@ -19,6 +20,7 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
   onCustomSpotUpdate,
   onRefreshLive,
   isRefreshing,
+  onOpenMarketSentiments,
 }) => {
   const {
     goldUsdPerOz,
@@ -39,6 +41,17 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
   const [editGold, setEditGold] = useState<string>(goldUsdPerOz.toString());
   const [editSilver, setEditSilver] = useState<string>(silverUsdPerOz.toString());
   const [editFx, setEditFx] = useState<string>(usdToSgdRate.toString());
+  const [secondsAgo, setSecondsAgo] = useState<number>(0);
+
+  React.useEffect(() => {
+    const calcElapsed = () => {
+      const diff = Math.floor((Date.now() - new Date(lastUpdated).getTime()) / 1000);
+      setSecondsAgo(Math.max(0, diff));
+    };
+    calcElapsed();
+    const interval = setInterval(calcElapsed, 1000);
+    return () => clearInterval(interval);
+  }, [lastUpdated]);
 
   const isMarketClosed = marketStatus === 'CLOSED' || isLive === false;
 
@@ -89,6 +102,12 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
     second: '2-digit',
   });
 
+  const formattedTimeOnly = new Date(lastUpdated).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+
   const formattedMarketCloseDateTime = lastMarketCloseTime
     ? new Date(lastMarketCloseTime).toLocaleString('en-US', {
         weekday: 'short',
@@ -128,9 +147,13 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
             <span className="text-slate-400 hidden sm:inline">{source || (isMarketClosed ? 'Market Close Settlement Quotes' : 'Real-time Bullion API')}</span>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <span className="text-slate-400 font-mono text-[11px]">
-              {isMarketClosed ? `Last Spot Updated ${formattedDateTime}` : `Updated ${formattedDateTime}`}
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded font-mono text-[11px] font-bold flex items-center space-x-1">
+              <Clock className="w-3 h-3 text-emerald-400" />
+              <span>Frequency: <strong>10s Auto-Polling</strong></span>
+            </span>
+            <span className="text-slate-300 font-mono text-[11px]">
+              {isMarketClosed ? `Market Close: ${formattedDateTime}` : `Updated: ${formattedTimeOnly} (${secondsAgo}s ago)`}
             </span>
             <button
               id="edit-custom-spot-btn"
@@ -321,6 +344,16 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
               )}
               <span className="text-xs text-slate-400">{unitLabel}</span>
             </div>
+
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+              <div className="flex items-center space-x-1 text-slate-400">
+                <Clock className="w-3 h-3 text-amber-400" />
+                <span>Updated: <strong className="text-amber-300">{formattedTimeOnly}</strong> ({secondsAgo}s ago)</span>
+              </div>
+              <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-300 rounded border border-amber-500/20 font-sans font-bold text-[10px]">
+                Freq: 10s Live
+              </span>
+            </div>
           </div>
 
           {/* Silver Spot Card */}
@@ -368,25 +401,67 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
               )}
               <span className="text-xs text-slate-400">{unitLabel}</span>
             </div>
+
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+              <div className="flex items-center space-x-1 text-slate-400">
+                <Clock className="w-3 h-3 text-slate-300" />
+                <span>Updated: <strong className="text-slate-200">{formattedTimeOnly}</strong> ({secondsAgo}s ago)</span>
+              </div>
+              <span className="px-1.5 py-0.5 bg-slate-400/10 text-slate-200 rounded border border-slate-400/20 font-sans font-bold text-[10px]">
+                Freq: 10s Live
+              </span>
+            </div>
           </div>
 
           {/* Gold/Silver Ratio Card */}
-          <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-300">
-                <Scale className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Gold / Silver Ratio</span>
+          <div
+            onClick={() => onOpenMarketSentiments?.()}
+            className="bg-gradient-to-br from-slate-800/90 to-slate-900 border border-indigo-500/40 hover:border-indigo-400 rounded-xl p-3.5 flex flex-col justify-between shadow-sm hover:shadow-indigo-500/10 cursor-pointer transition-all hover:scale-[1.015] group"
+            title="Click to view detailed Live Gold/Silver Ratio & Market Sentiment Report"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                  <div className="flex items-center space-x-1 text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                    <Scale className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Gold / Silver Ratio</span>
+                  </div>
+                </div>
+                <span className="text-[10px] text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-bold flex items-center gap-1">
+                  <Radio className="w-2.5 h-2.5 text-emerald-400" />
+                  LIVE
+                </span>
               </div>
-              <span className="text-[11px] text-slate-400 bg-slate-700/60 px-1.5 py-0.5 rounded">
-                Au/Ag
-              </span>
+
+              <div className="mt-1 flex items-baseline justify-between">
+                <span className="text-2xl font-extrabold text-indigo-200 font-mono group-hover:text-indigo-100 transition-colors">
+                  {goldSilverRatio} : 1
+                </span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                  parseFloat(goldSilverRatio) > 80
+                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    : parseFloat(goldSilverRatio) < 70
+                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                    : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                }`}>
+                  {parseFloat(goldSilverRatio) > 80 ? 'Silver Undervalued 🚀' : parseFloat(goldSilverRatio) < 70 ? 'Gold Value' : 'Historical Mean'}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-slate-400 font-mono mt-1">
+                1 oz Gold = <strong className="text-slate-200">{goldSilverRatio} oz</strong> Silver (S${goldSpotSgd.toFixed(0)} / S${silverSpotSgd.toFixed(2)})
+              </p>
             </div>
-            <div className="mt-1 flex items-baseline justify-between">
-              <span className="text-2xl font-extrabold text-indigo-300 font-mono">
-                {goldSilverRatio}:1
-              </span>
-              <span className="text-[11px] text-slate-400">
-                {parseFloat(goldSilverRatio) > 80 ? 'Silver undervalued' : 'Balanced'}
+
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+              <div className="flex items-center space-x-1 text-slate-400">
+                <Clock className="w-3 h-3 text-indigo-400" />
+                <span>Updated: <strong className="text-indigo-300">{formattedTimeOnly}</strong> ({secondsAgo}s ago)</span>
+              </div>
+              <span className="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 rounded border border-indigo-500/20 font-sans font-bold text-[10px] flex items-center gap-1">
+                <span>10s Live Ratio</span>
+                <Compass className="w-3 h-3 text-amber-400" />
               </span>
             </div>
           </div>
@@ -397,44 +472,115 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
             className="bg-gradient-to-br from-slate-800/90 to-slate-900 border border-emerald-500/40 hover:border-emerald-400 rounded-xl p-3.5 relative overflow-hidden shadow-sm hover:shadow-emerald-500/10 flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.015] group"
             title="Click to view 24-hour USD/SGD Exchange Rate Trend Chart"
           >
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1 group-hover:text-emerald-300 transition-colors">
-                  <ArrowRightLeft className="w-3.5 h-3.5" />
-                  <span>Exchange Rate (USD/SGD)</span>
-                </span>
-              </div>
-              <div
-                className={`flex items-center space-x-0.5 text-xs font-bold px-1.5 py-0.5 rounded ${
-                  (fxChange24hPct || -0.05) >= 0
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                }`}
-              >
-                {(fxChange24hPct || -0.05) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                <span>{(fxChange24hPct || -0.05) >= 0 ? `+${(fxChange24hPct || -0.05).toFixed(2)}%` : `${(fxChange24hPct || -0.05).toFixed(2)}%`}</span>
-              </div>
-            </div>
-
-            <div className="flex items-baseline justify-between mt-1">
-              <div className="flex items-baseline space-x-2">
-                <span className="text-xl font-bold text-white font-mono group-hover:text-emerald-200 transition-colors">
-                  1 USD = {usdToSgdRate.toFixed(4)} SGD
-                </span>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1 group-hover:text-emerald-300 transition-colors">
+                    <ArrowRightLeft className="w-3.5 h-3.5" />
+                    <span>Exchange Rate (USD/SGD)</span>
+                  </span>
+                </div>
+                <div
+                  className={`flex items-center space-x-0.5 text-xs font-bold px-1.5 py-0.5 rounded ${
+                    (fxChange24hPct || -0.05) >= 0
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}
+                >
+                  {(fxChange24hPct || -0.05) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  <span>{(fxChange24hPct || -0.05) >= 0 ? `+${(fxChange24hPct || -0.05).toFixed(2)}%` : `${(fxChange24hPct || -0.05).toFixed(2)}%`}</span>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-1.5">
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-extrabold px-1.5 py-0.5 rounded border border-emerald-500/30 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all flex items-center gap-1">
-                  <LineChart className="w-3 h-3" />
-                  <span>24h Chart 📈</span>
-                </span>
-                <div className="hidden sm:flex items-center space-x-1 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-                  <ShieldCheck className="w-3 h-3" />
-                  <span>0% GST IPM</span>
+              <div className="flex items-baseline justify-between mt-1">
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-xl font-bold text-white font-mono group-hover:text-emerald-200 transition-colors">
+                    1 USD = {usdToSgdRate.toFixed(4)} SGD
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-extrabold px-1.5 py-0.5 rounded border border-emerald-500/30 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all flex items-center gap-1">
+                    <LineChart className="w-3 h-3" />
+                    <span>24h Chart 📈</span>
+                  </span>
                 </div>
               </div>
             </div>
+
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+              <div className="flex items-center space-x-1 text-slate-400">
+                <Clock className="w-3 h-3 text-emerald-400" />
+                <span>FX Updated: <strong className="text-emerald-300">{formattedTimeOnly}</strong> ({secondsAgo}s ago)</span>
+              </div>
+              <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-300 rounded border border-emerald-500/20 font-sans font-bold text-[10px]">
+                Freq: 10s Live (Forex)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Daily Market Sentiment & Trajectory Live Banner */}
+        <div className="bg-slate-950/80 border border-amber-500/30 rounded-xl p-3 sm:px-4 sm:py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-md">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            <div className="p-1.5 bg-amber-500/20 border border-amber-500/40 rounded-lg text-amber-300 flex items-center justify-center">
+              <Compass className="w-4 h-4 text-amber-400" />
+            </div>
+
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-extrabold text-amber-300 uppercase tracking-wide text-xs">
+                  Daily Market Trajectory & Targets
+                </span>
+                <span className="px-2 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full font-mono font-bold text-[10px] flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  Updated Today ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-0.5 flex flex-wrap items-center gap-2.5">
+                <span className="flex items-center gap-1">
+                  <span>Gold Target:</span>
+                  <strong className="text-amber-300 font-mono">S$3,890 ($2,910)</strong>
+                  <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-mono font-bold">
+                    6-Mo (Q4)
+                  </span>
+                  <span className="text-emerald-400 font-mono font-bold text-[10px]">
+                    ({((3890 - goldSpotSgd) / goldSpotSgd * 100) >= 0 ? '+' : ''}{((3890 - goldSpotSgd) / goldSpotSgd * 100).toFixed(1)}% vs live)
+                  </span>
+                </span>
+                <span className="text-slate-600 hidden sm:inline">•</span>
+                <span className="flex items-center gap-1">
+                  <span>Silver Target:</span>
+                  <strong className="text-slate-200 font-mono">S$44.20 ($33.00)</strong>
+                  <span className="px-1.5 py-0.2 bg-slate-400/20 text-slate-200 border border-slate-400/30 rounded text-[10px] font-mono font-bold">
+                    6-Mo (Q4)
+                  </span>
+                  <span className="text-emerald-400 font-mono font-bold text-[10px]">
+                    ({((44.20 - silverSpotSgd) / silverSpotSgd * 100) >= 0 ? '+' : ''}{((44.20 - silverSpotSgd) / silverSpotSgd * 100).toFixed(1)}% vs live)
+                  </span>
+                </span>
+                <span className="text-slate-600 hidden sm:inline">•</span>
+                <span className="flex items-center gap-1">
+                  <span>Target GSR:</span>
+                  <strong className="text-indigo-300 font-mono">78:1</strong>
+                  <span className="text-slate-400 text-[10px] font-mono">(Live {goldSilverRatio}:1)</span>
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 self-start md:self-center">
+            <span className="px-2 py-1 bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded font-bold text-[11px]">
+              Daily Bias: Bullish (78%)
+            </span>
+            <button
+              onClick={() => onOpenMarketSentiments?.()}
+              className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold rounded-lg text-xs transition-all shadow-sm flex items-center space-x-1.5 cursor-pointer"
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Full Trajectory Report</span>
+            </button>
           </div>
         </div>
       </div>
