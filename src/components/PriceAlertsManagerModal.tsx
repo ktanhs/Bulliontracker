@@ -10,11 +10,6 @@ import {
   Zap,
   CheckCircle2,
   Clock,
-  DollarSign,
-  Percent,
-  Sparkles,
-  ArrowDown,
-  RefreshCw,
   Radio,
 } from 'lucide-react';
 
@@ -28,7 +23,10 @@ interface PriceAlertsManagerModalProps {
   onDeleteAlert: (id: string) => void;
   onOpenCreateAlert: () => void;
   onSimulatePriceDip: () => void;
+  triggeredNotifications?: TriggeredAlertNotification[];
   triggeredHistory: TriggeredAlertNotification[];
+  onDismissNotification?: (id: string) => void;
+  onClearAllNotifications?: () => void;
   onSelectProductById: (productId: string) => void;
 }
 
@@ -42,10 +40,15 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
   onDeleteAlert,
   onOpenCreateAlert,
   onSimulatePriceDip,
-  triggeredHistory,
+  triggeredNotifications = [],
+  triggeredHistory = [],
+  onDismissNotification,
+  onClearAllNotifications,
   onSelectProductById,
 }) => {
-  const [activeTab, setActiveTab] = useState<'ACTIVE' | 'HISTORY'>('ACTIVE');
+  const [activeTab, setActiveTab] = useState<'TRIGGERED' | 'ACTIVE' | 'HISTORY'>(
+    triggeredNotifications.length > 0 ? 'TRIGGERED' : 'ACTIVE'
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,9 +61,6 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
   // Map products by ID for fast lookup
   const productMap = new Map<string, ComputedProductMetrics>();
   computedProducts.forEach((p) => productMap.set(p.product.id, p));
-
-  const activeAlerts = alerts.filter((a) => a.active);
-  const inactiveAlerts = alerts.filter((a) => !a.active);
 
   return (
     <div
@@ -80,8 +80,13 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
             <div>
               <div className="flex items-center space-x-2">
                 <h2 className="text-lg font-extrabold text-white">Live Price Alerts Center</h2>
+                {triggeredNotifications.length > 0 && (
+                  <span className="bg-rose-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full animate-pulse">
+                    {triggeredNotifications.length} Triggered
+                  </span>
+                )}
                 <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                  {alerts.length} Total Saved
+                  {alerts.length} Configured
                 </span>
               </div>
               <p className="text-xs text-slate-400">
@@ -92,7 +97,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -134,26 +139,39 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
         <div className="p-4 bg-slate-950/60 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <div className="flex space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
             <button
+              onClick={() => setActiveTab('TRIGGERED')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                activeTab === 'TRIGGERED'
+                  ? 'bg-rose-500 text-white shadow-sm font-extrabold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Zap className={`w-3.5 h-3.5 ${triggeredNotifications.length > 0 ? 'text-white fill-white' : ''}`} />
+              <span>
+                Triggered ({triggeredNotifications.length})
+              </span>
+            </button>
+            <button
               onClick={() => setActiveTab('ACTIVE')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'ACTIVE'
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <BellRing className="w-3.5 h-3.5" />
-              <span>Configured Alerts ({alerts.length})</span>
+              <span>Configured ({alerts.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('HISTORY')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'HISTORY'
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Trigger Logs ({triggeredHistory.length})</span>
+              <span>Logs ({triggeredHistory.length})</span>
             </button>
           </div>
 
@@ -161,7 +179,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
             {/* Quick Test / Trigger Simulation Button */}
             <button
               onClick={onSimulatePriceDip}
-              className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5"
+              className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer"
               title="Temporarily drop spot price by 3% to test alert triggers live"
             >
               <Zap className="w-3.5 h-3.5 text-rose-400 fill-rose-400 animate-pulse" />
@@ -173,7 +191,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
                 onClose();
                 onOpenCreateAlert();
               }}
-              className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5"
+              className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>Set New Alert</span>
@@ -183,6 +201,111 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
 
         {/* Modal Main Content Area */}
         <div className="p-5 max-h-[60vh] overflow-y-auto space-y-3">
+          {activeTab === 'TRIGGERED' && (
+            <div>
+              {triggeredNotifications.length === 0 ? (
+                <div className="text-center py-10 px-4 bg-slate-950/40 border border-dashed border-slate-800 rounded-2xl">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                  <h3 className="text-sm font-bold text-white mb-1">No Active Price Alerts Triggered</h3>
+                  <p className="text-xs text-slate-400">
+                    All configured price targets and premium thresholds are currently being monitored.
+                  </p>
+                  <p className="text-[11px] text-amber-400 mt-2 italic">
+                    Tip: Click "Simulate Spot Dip (-3%)" above to trigger a test price alert!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Top Bar for Clearing All Triggered Alerts */}
+                  <div className="p-3 bg-rose-950/80 border border-rose-500/40 rounded-xl flex items-center justify-between gap-3">
+                    <div className="flex items-center space-x-2 text-rose-200 text-xs font-bold">
+                      <Zap className="w-4 h-4 text-rose-400 fill-rose-400 animate-bounce" />
+                      <span>{triggeredNotifications.length} Alert{triggeredNotifications.length > 1 ? 's' : ''} Triggered!</span>
+                    </div>
+
+                    {onClearAllNotifications && (
+                      <button
+                        onClick={onClearAllNotifications}
+                        className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-lg transition-all shadow-md flex items-center space-x-1.5 cursor-pointer"
+                        title="Clear all active triggered alerts in one click"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Clear All Alerts ({triggeredNotifications.length})</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* List of Triggered Notifications */}
+                  {triggeredNotifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className="p-3.5 bg-slate-800/90 border border-rose-500/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md"
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        {notif.productImageUrl ? (
+                          <img
+                            src={notif.productImageUrl}
+                            alt={notif.productName}
+                            className="w-12 h-12 object-cover rounded-xl border border-slate-700 bg-slate-900 flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <BellRing className="w-6 h-6" />
+                          </div>
+                        )}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="text-xs font-bold text-white truncate">{notif.productName}</h4>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-bold uppercase">
+                              {notif.retailerName}
+                            </span>
+                          </div>
+
+                          <div className="text-xs font-mono mt-1 flex flex-wrap items-center gap-2">
+                            <span className="text-emerald-400 font-extrabold">
+                              Hit: S${notif.currentValue.toFixed(2)}
+                            </span>
+                            <span className="text-slate-400">
+                              (Target: S${notif.targetValue.toFixed(2)})
+                            </span>
+                          </div>
+
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            Triggered: {new Date(notif.triggeredAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-700">
+                        <button
+                          onClick={() => {
+                            onClose();
+                            onSelectProductById(notif.alert.productId);
+                          }}
+                          className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        >
+                          View Item ↗
+                        </button>
+
+                        {onDismissNotification && (
+                          <button
+                            onClick={() => onDismissNotification(notif.id)}
+                            className="px-3 py-1.5 bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/50 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                            title="Dismiss / Clear this alert notification"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>Dismiss</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'ACTIVE' && (
             <>
               {alerts.length === 0 ? (
@@ -199,7 +322,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
                       onClose();
                       onOpenCreateAlert();
                     }}
-                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all inline-flex items-center space-x-2"
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all inline-flex items-center space-x-2 cursor-pointer"
                   >
                     <PlusCircle className="w-4 h-4" />
                     <span>Create Your First Price Alert</span>
@@ -249,7 +372,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
                               className="w-12 h-12 object-cover rounded-xl border border-slate-700 bg-slate-900 flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-amber-400">
+                            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-amber-400 flex-shrink-0">
                               <BellRing className="w-6 h-6" />
                             </div>
                           )}
@@ -292,7 +415,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
                         <div className="flex items-center space-x-2 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-700">
                           <button
                             onClick={() => onToggleAlert(alert.id)}
-                            className={`p-2 rounded-xl text-xs font-bold flex items-center space-x-1 transition-colors ${
+                            className={`p-2 rounded-xl text-xs font-bold flex items-center space-x-1 transition-colors cursor-pointer ${
                               alert.active
                                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
                                 : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white'
@@ -305,7 +428,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
 
                           <button
                             onClick={() => onDeleteAlert(alert.id)}
-                            className="p-2 bg-slate-800 hover:bg-rose-950 hover:text-rose-300 border border-slate-700 hover:border-rose-500/40 text-slate-400 rounded-xl transition-colors"
+                            className="p-2 bg-slate-800 hover:bg-rose-950 hover:text-rose-300 border border-slate-700 hover:border-rose-500/40 text-slate-400 rounded-xl transition-colors cursor-pointer"
                             title="Delete Alert"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -357,7 +480,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
                             onClose();
                             onSelectProductById(notif.alert.productId);
                           }}
-                          className="text-[11px] text-amber-400 hover:underline font-bold"
+                          className="text-[11px] text-amber-400 hover:underline font-bold cursor-pointer"
                         >
                           View Product ↗
                         </button>
@@ -377,7 +500,7 @@ export const PriceAlertsManagerModal: React.FC<PriceAlertsManagerModalProps> = (
           </p>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs rounded-xl border border-slate-700 transition-colors"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs rounded-xl border border-slate-700 transition-colors cursor-pointer"
           >
             Close Center
           </button>

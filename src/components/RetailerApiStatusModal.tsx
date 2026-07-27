@@ -221,6 +221,19 @@ export const RetailerApiStatusModal: React.FC<RetailerApiStatusModalProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Modal Footer with Single-Click Dismiss Button */}
+        <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
+          <span className="text-xs text-slate-400">
+            Real-time API Monitor
+          </span>
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+          >
+            Dismiss Status Window
+          </button>
+        </div>
       </div>
     </div>
   );

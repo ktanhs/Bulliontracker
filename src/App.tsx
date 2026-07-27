@@ -144,9 +144,9 @@ export default function App() {
     localStorage.setItem('bullion_price_alerts_v1', JSON.stringify(priceAlerts));
   }, [priceAlerts]);
 
-  // Load initial prices on mount
-  const loadPrices = async (isManualRefresh: boolean = false) => {
-    setIsRefreshing(true);
+  // Load initial prices on mount and poll silently
+  const loadPrices = async (isManualRefresh: boolean = false, isSilent: boolean = false) => {
+    if (!isSilent) setIsRefreshing(true);
     try {
       const data = await fetchLivePrices(isManualRefresh);
       setSpotPrices(data.spotPrices);
@@ -155,16 +155,69 @@ export default function App() {
         setApiStatuses(data.retailerApiStatus);
       }
     } catch (e) {
-      // Fallback generator
-      const fallbackProds = generateProductsWithPrices(DEFAULT_SPOT_PRICES);
-      setRawProducts(fallbackProds);
+      // Client-side fallback fetching if backend route fails
+      try {
+        let goldUsd = spotPrices.goldUsdPerOz;
+        let silverUsd = spotPrices.silverUsdPerOz;
+        let usdSgd = spotPrices.usdToSgdRate;
+
+        // Try FX rate
+        try {
+          const fxRes = await fetch('https://open.er-api.com/v6/latest/USD');
+          if (fxRes.ok) {
+            const fxData = await fxRes.json();
+            if (fxData?.rates?.SGD) usdSgd = Math.round(fxData.rates.SGD * 10000) / 10000;
+          }
+        } catch (_) {}
+
+        // Try Gold
+        try {
+          const goldRes = await fetch('https://api.gold-api.com/price/XAU');
+          if (goldRes.ok) {
+            const goldData = await goldRes.json();
+            if (goldData?.price) goldUsd = Math.round(goldData.price * 100) / 100;
+          }
+        } catch (_) {}
+
+        // Try Silver
+        try {
+          const silverRes = await fetch('https://api.gold-api.com/price/XAG');
+          if (silverRes.ok) {
+            const silverData = await silverRes.json();
+            if (silverData?.price) silverUsd = Math.round(silverData.price * 100) / 100;
+          }
+        } catch (_) {}
+
+        const updatedSpot: SpotPrices = {
+          ...spotPrices,
+          goldUsdPerOz: goldUsd,
+          silverUsdPerOz: silverUsd,
+          usdToSgdRate: usdSgd,
+          lastUpdated: new Date().toISOString(),
+        };
+
+        setSpotPrices(updatedSpot);
+        const fallbackProds = generateProductsWithPrices(updatedSpot);
+        setRawProducts(fallbackProds);
+      } catch (_) {
+        const fallbackProds = generateProductsWithPrices(DEFAULT_SPOT_PRICES);
+        setRawProducts(fallbackProds);
+      }
     } finally {
-      setIsRefreshing(false);
+      if (!isSilent) setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
-    loadPrices(false);
+    // Initial fetch
+    loadPrices(false, false);
+
+    // Live background polling every 10 seconds for real-time spot updates
+    const pollInterval = setInterval(() => {
+      loadPrices(true, true);
+    }, 10000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   const handleCustomSpotUpdate = async (custom: {
@@ -279,6 +332,11 @@ export default function App() {
 
   const handleDismissNotification = (id: string) => {
     setTriggeredNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleClearAllNotifications = () => {
+    setTriggeredNotifications([]);
+    setTriggeredHistory([]);
   };
 
   const handleSimulatePriceDip = () => {
@@ -729,7 +787,7 @@ export default function App() {
           computedProducts={allComputedProducts}
           currency={currency}
           spotPrices={spotPrices}
-          onClose={() => setIsAlertsManagerOpen(null)}
+          onClose={() => setIsAlertsManagerOpen(false)}
           onToggleAlert={handleToggleAlert}
           onDeleteAlert={handleDeleteAlert}
           onOpenCreateAlert={() => {
@@ -738,7 +796,10 @@ export default function App() {
             }
           }}
           onSimulatePriceDip={handleSimulatePriceDip}
+          triggeredNotifications={triggeredNotifications}
           triggeredHistory={triggeredHistory}
+          onDismissNotification={handleDismissNotification}
+          onClearAllNotifications={handleClearAllNotifications}
           onSelectProductById={handleSelectProductById}
         />
       )}
@@ -765,13 +826,7 @@ export default function App() {
       )}
 
 
-      {/* Triggered Price Alert Toast Notifications */}
-      <PriceAlertToast
-        notifications={triggeredNotifications}
-        currency={currency}
-        onDismiss={handleDismissNotification}
-        onSelectProductById={handleSelectProductById}
-      />
+      {/* Price Alert notifications are suppressed from auto-popping up and instead indicated on the Price Alerts Tab */}
 
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-500 mt-auto">

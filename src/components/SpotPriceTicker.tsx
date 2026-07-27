@@ -298,17 +298,15 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
             </div>
 
             <div className="flex items-baseline space-x-2 mt-1">
-              {currency === 'SGD' && (
+              {currency === 'SGD' ? (
                 <span className="text-xl font-bold text-white font-mono">
                   {formatMoney(goldSpotSgd, 'S$')}
                 </span>
-              )}
-              {currency === 'USD' && (
+              ) : currency === 'USD' ? (
                 <span className="text-xl font-bold text-white font-mono">
-                  {formatMoney(goldSpotUsd, '$')}
+                  {formatMoney(goldSpotUsd, '$ USD')}
                 </span>
-              )}
-              {currency === 'DUAL' && (
+              ) : (
                 <div className="flex flex-col">
                   <span className="text-lg font-bold text-white font-mono">
                     {formatMoney(goldSpotSgd, 'S$')}
@@ -347,17 +345,15 @@ export const SpotPriceTicker: React.FC<SpotPriceTickerProps> = ({
             </div>
 
             <div className="flex items-baseline space-x-2 mt-1">
-              {currency === 'SGD' && (
+              {currency === 'SGD' ? (
                 <span className="text-xl font-bold text-white font-mono">
                   {formatMoney(silverSpotSgd, 'S$')}
                 </span>
-              )}
-              {currency === 'USD' && (
+              ) : currency === 'USD' ? (
                 <span className="text-xl font-bold text-white font-mono">
-                  {formatMoney(silverSpotUsd, '$')}
+                  {formatMoney(silverSpotUsd, '$ USD')}
                 </span>
-              )}
-              {currency === 'DUAL' && (
+              ) : (
                 <div className="flex flex-col">
                   <span className="text-lg font-bold text-white font-mono">
                     {formatMoney(silverSpotSgd, 'S$')}

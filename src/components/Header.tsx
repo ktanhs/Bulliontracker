@@ -167,24 +167,6 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Price Alerts Manager Button */}
-            <button
-              id="price-alerts-btn"
-              onClick={onOpenAlertsManager}
-              className="relative flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium transition-colors"
-              title="Price Alerts Manager"
-            >
-              <BellRing className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span className="hidden sm:inline">Price Alerts</span>
-              {alertsCount > 0 && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                  triggeredCount > 0 ? 'bg-rose-500 text-white animate-pulse' : 'bg-amber-500 text-slate-950'
-                }`}>
-                  {alertsCount}
-                </span>
-              )}
-            </button>
-
             {/* Retailer APIs Live Sync Status Button */}
             {onOpenApiStatusModal && (
               <button
@@ -218,6 +200,27 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Bottom Tab Navigation */}
         <div className="flex overflow-x-auto space-x-1 border-t border-slate-800/80 pt-1 pb-1 scrollbar-none">
+          <button
+            id="tab-alerts-btn"
+            onClick={onOpenAlertsManager}
+            className={`flex items-center space-x-2 px-3.5 py-2 text-xs font-bold rounded-md whitespace-nowrap transition-all border ${
+              triggeredCount > 0
+                ? 'bg-rose-950/90 text-rose-300 border-rose-500/60 animate-pulse shadow-sm'
+                : 'bg-slate-800/80 text-amber-300 border-slate-700 hover:bg-slate-800'
+            }`}
+            title="Open Price Alerts Manager Window"
+          >
+            <BellRing className={`w-3.5 h-3.5 ${triggeredCount > 0 ? 'text-rose-400 fill-rose-400' : 'text-amber-400 fill-amber-400'}`} />
+            <span>Price Alerts</span>
+            {alertsCount > 0 && (
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                triggeredCount > 0 ? 'bg-rose-500 text-white' : 'bg-amber-500 text-slate-950'
+              }`}>
+                {triggeredCount > 0 ? `${triggeredCount} Triggered` : alertsCount}
+              </span>
+            )}
+          </button>
+
           <button
             id="tab-market-sentiments-btn"
             onClick={onOpenMarketSentiments}
